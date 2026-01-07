@@ -49,7 +49,6 @@ func printCredential(c storage.Credential) {
 		fmt.Printf("%s: %s\n", strings.Title(field.Key), field.Value)
 	}
 	fmt.Println()
-	// fmt.Println("---------------------------")
 }
 
 func init() {
