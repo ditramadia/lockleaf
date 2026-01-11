@@ -49,6 +49,11 @@ func (s *Storage) Save(v *Vault) error {
 		return fmt.Errorf("[ERROR] failed to sync file: %w", err)
 	}
 
+	// Close the temp file
+	if err := tmpFile.Close(); err != nil {
+		return fmt.Errorf("[ERROR] failed to close temp file: %w", err)
+	}
+
 	// Atomic rename (replaces old file with new one)
 	if err := os.Rename(tmpPath, path); err != nil {
 		return fmt.Errorf("[ERROR] failed to finalize save: %w", err)
