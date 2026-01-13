@@ -13,14 +13,13 @@ func TestSaveAndLoad(t *testing.T) {
 
 	// Create a dummy vault
 	v := NewVault("test-vault")
-	c := Credential{
+	v.Credentials["github"] = Credential{
 		Name: "Github",
-		Fields: []Field{
-			{Label: "username", Value: "gopher", IsSecret: false},
-			{Label: "password", Value: "s3cr3t", IsSecret: true},
+		Fields: map[string]Field{
+			"username": {Value: "gopher", IsSecret: false},
+			"password": {Value: "s3cr3t", IsSecret: true},
 		},
 	}
-	v.Credentials = append(v.Credentials, c)
 
 	// Test saving the vault
 	err := storage.Save(v)
@@ -45,7 +44,7 @@ func TestSaveAndLoad(t *testing.T) {
 		t.Errorf("Expected name %s, got %s", v.Name, loadedVault.Name)
 	}
 
-	if c := loadedVault.Credentials[0]; c.Name != "Github" {
+	if c := loadedVault.Credentials["Github"]; c.Name != "Github" {
 		t.Errorf("Missing credential 'github' after load")
 	}
 }
