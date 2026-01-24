@@ -89,3 +89,19 @@ func (s *Storage) Load(vaultName string) (*Vault, error) {
 
 	return &v, nil
 }
+
+func (s *Storage) IsVaultExists(vaultName string) (bool, error) {
+	path := s.GetPath(vaultName)
+
+	// Open the vault file
+	file, err := os.Open(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		}
+		return false, err
+	}
+	defer file.Close()
+
+	return true, nil
+}

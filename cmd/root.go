@@ -43,7 +43,7 @@ func Setup() error {
 	storage := vault.NewStorage(dataDir)
 
 	// Setup manager
-	globalManager.Storage = *storage
+	globalManager.Storage = storage
 
 	return nil
 }
