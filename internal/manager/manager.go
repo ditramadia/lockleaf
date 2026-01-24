@@ -7,10 +7,10 @@ import (
 )
 
 var (
-	ErrVaultExists        = errors.New("vault already exists")
-	ErrCredentialNotFound = errors.New("credential not found")
-	ErrCredentialExists   = errors.New("credential already exists")
-	ErrFieldNotFound      = errors.New("field not found")
+	ErrVaultExists        = errors.New("Vault already exists")
+	ErrCredentialNotFound = errors.New("Credential not found")
+	ErrCredentialExists   = errors.New("Credential already exists")
+	ErrFieldNotFound      = errors.New("Field not found")
 )
 
 // Manager represents the app global manager

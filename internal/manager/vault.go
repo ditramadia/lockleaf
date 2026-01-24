@@ -18,15 +18,18 @@ func (m *Manager) CreateVault(name string) error {
 	}
 
 	// Create a new vault model
-	vault := vault.Vault{
-		Name: name,
-	}
+	vault := vault.NewVault(name)
 
 	// Save the vault
-	err = m.Storage.Save(&vault)
+	err = m.Storage.Save(vault)
 	if err != nil {
 		return fmt.Errorf("Error saving the vault: %v", err)
 	}
 
 	return nil
+}
+
+// ListVaults returns all created vaults
+func (m *Manager) ListVaults() ([]string, error) {
+	return m.Storage.List()
 }

@@ -11,6 +11,7 @@ import (
 )
 
 var globalManager *manager.Manager
+var customPath string
 
 var RootCmd = &cobra.Command{
 	Use:   "pw",
@@ -24,17 +25,28 @@ var RootCmd = &cobra.Command{
 	},
 }
 
+func init() {
+	RootCmd.PersistentFlags().StringVarP(&customPath, "path", "p", "", "custom path for vault files")
+}
+
 func Execute() error {
 	return RootCmd.Execute()
 }
 
 func Setup() error {
 	// Config
-	baseDir, err := os.UserConfigDir()
-	if err != nil {
-		return fmt.Errorf("Error finding storage directory: %v\n", err)
+	var dataDir string
+	if customPath != "" {
+		dataDir = customPath
+	} else {
+		// Default logic using os.UserConfigDir()
+		baseDir, err := os.UserConfigDir()
+		if err != nil {
+			return fmt.Errorf("Error finding storage directory: %v\n", err)
+		}
+		dataDir = filepath.Join(baseDir, "lockleaf", "vaults")
 	}
-	dataDir := filepath.Join(baseDir, "lockleaf")
+
 	if err := os.MkdirAll(dataDir, 0700); err != nil {
 		return fmt.Errorf("Error creating storage directory: %v\n", err)
 	}
@@ -43,7 +55,7 @@ func Setup() error {
 	storage := vault.NewStorage(dataDir)
 
 	// Setup manager
-	globalManager.Storage = storage
+	globalManager = manager.NewManager(storage)
 
 	return nil
 }

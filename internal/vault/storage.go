@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 type Storage struct {
@@ -19,7 +20,7 @@ func NewStorage(dataDir string) *Storage {
 
 // GetPath returns the full file path for the given vault name
 func (s *Storage) GetPath(vaultName string) string {
-	return filepath.Join(s.DataDir, vaultName+".leaf")
+	return filepath.Join(s.DataDir, strings.ToLower(vaultName)+".leaf")
 }
 
 // IsVaultExists checks if a vault exist by name
@@ -39,7 +40,7 @@ func (s *Storage) IsVaultExists(vaultName string) (bool, error) {
 	return true, nil
 }
 
-// Save saves the storage to disk
+// Save writes the vault to disk
 func (s *Storage) Save(v *Vault) error {
 	path := s.GetPath(v.Name)
 
@@ -80,7 +81,7 @@ func (s *Storage) Save(v *Vault) error {
 	return nil
 }
 
-// Load loads the storage from disk
+// Load returns the vault from disk
 func (s *Storage) Load(vaultName string) (*Vault, error) {
 	path := s.GetPath(vaultName)
 
@@ -107,4 +108,23 @@ func (s *Storage) Load(vaultName string) (*Vault, error) {
 	}
 
 	return &v, nil
+}
+
+// List returns a list of vault names
+func (s *Storage) List() ([]string, error) {
+	entries, err := os.ReadDir(s.DataDir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read data directory: %w", err)
+	}
+
+	var vaults []string
+	for _, entry := range entries {
+		// Only look for files (not folders) ending in .leaf
+		if !entry.IsDir() && filepath.Ext(entry.Name()) == ".leaf" {
+			// Strip the extension: "work.leaf" -> "work"
+			name := entry.Name()[:len(entry.Name())-len(".leaf")]
+			vaults = append(vaults, name)
+		}
+	}
+	return vaults, nil
 }
