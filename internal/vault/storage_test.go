@@ -6,6 +6,7 @@ import (
 	"testing"
 )
 
+// TestSaveAndLoad tests the saving and loading of vaults
 func TestSaveAndLoad(t *testing.T) {
 	// Setup temporary directory for the test
 	tmpDir := t.TempDir()
@@ -16,8 +17,8 @@ func TestSaveAndLoad(t *testing.T) {
 	v.Credentials["github"] = Credential{
 		Name: "Github",
 		Fields: map[string]Field{
-			"username": {Value: "gopher", IsSecret: false},
-			"password": {Value: "s3cr3t", IsSecret: true},
+			"username": {Label: "username", Value: "gopher", IsSecret: false},
+			"password": {Label: "password", Value: "s3cr3t", IsSecret: true},
 		},
 	}
 
@@ -44,11 +45,12 @@ func TestSaveAndLoad(t *testing.T) {
 		t.Errorf("Expected name %s, got %s", v.Name, loadedVault.Name)
 	}
 
-	if c := loadedVault.Credentials["Github"]; c.Name != "Github" {
+	if c := loadedVault.Credentials["github"]; c.Name != "Github" {
 		t.Errorf("Missing credential 'github' after load")
 	}
 }
 
+// TestLoadMissingVault tests loading a non-existent vault
 func TestLoadMissingVault(t *testing.T) {
 	tmpDir := t.TempDir()
 	storage := NewStorage(tmpDir)
