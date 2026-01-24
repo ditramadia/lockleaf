@@ -8,15 +8,12 @@ import (
 
 // TestSaveAndLoad tests the saving and loading of vaults
 func TestSaveAndLoad(t *testing.T) {
-	// Setup temporary directory for the test
+	// Setup temporary storage for the test
 	tmpDir := t.TempDir()
 	storage := NewStorage(tmpDir)
 
 	// Create a dummy vault
-	v := Vault{
-		Name:        "test-vault",
-		Credentials: make(map[string]Credential),
-	}
+	v := NewVault("test-vault")
 	v.Credentials["github"] = Credential{
 		Name: "Github",
 		Fields: map[string]Field{
@@ -26,7 +23,7 @@ func TestSaveAndLoad(t *testing.T) {
 	}
 
 	// Test saving the vault
-	err := storage.Save(&v)
+	err := storage.Save(v)
 	if err != nil {
 		t.Fatalf("Failed to save vault: %v", err)
 	}

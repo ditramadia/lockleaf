@@ -22,6 +22,24 @@ func (s *Storage) GetPath(vaultName string) string {
 	return filepath.Join(s.DataDir, vaultName+".leaf")
 }
 
+// IsVaultExists checks if a vault exist by name
+func (s *Storage) IsVaultExists(vaultName string) (bool, error) {
+	path := s.GetPath(vaultName)
+
+	// Open the vault file
+	file, err := os.Open(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		}
+		return false, err
+	}
+	defer file.Close()
+
+	return true, nil
+}
+
+// Save saves the storage to disk
 func (s *Storage) Save(v *Vault) error {
 	path := s.GetPath(v.Name)
 
@@ -62,6 +80,7 @@ func (s *Storage) Save(v *Vault) error {
 	return nil
 }
 
+// Load loads the storage from disk
 func (s *Storage) Load(vaultName string) (*Vault, error) {
 	path := s.GetPath(vaultName)
 
@@ -88,20 +107,4 @@ func (s *Storage) Load(vaultName string) (*Vault, error) {
 	}
 
 	return &v, nil
-}
-
-func (s *Storage) IsVaultExists(vaultName string) (bool, error) {
-	path := s.GetPath(vaultName)
-
-	// Open the vault file
-	file, err := os.Open(path)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return false, nil
-		}
-		return false, err
-	}
-	defer file.Close()
-
-	return true, nil
 }

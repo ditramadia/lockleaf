@@ -23,11 +23,11 @@ var InitCmd = &cobra.Command{
 
 		err := globalManager.CreateVault(vaultName)
 		if err != nil {
-			fmt.Printf("❌ %v\n", err)
+			fmt.Printf("%v\n", err)
 			os.Exit(1)
 		}
 
-		fmt.Printf("✅ Vault '%s' initialized.\n", vaultName)
+		fmt.Printf("Vault '%s' initialized.\n", vaultName)
 	},
 }
 
