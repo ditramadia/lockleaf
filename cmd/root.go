@@ -19,7 +19,7 @@ var RootCmd = &cobra.Command{
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		err := Setup()
 		if err != nil {
-			return fmt.Errorf("Error setting up cobra commands: %v\n", err)
+			return fmt.Errorf("error setting up cobra commands: %v", err)
 		}
 		return nil
 	},
@@ -42,13 +42,13 @@ func Setup() error {
 		// Default logic using os.UserConfigDir()
 		baseDir, err := os.UserConfigDir()
 		if err != nil {
-			return fmt.Errorf("Error finding storage directory: %v\n", err)
+			return fmt.Errorf("error finding storage directory: %v", err)
 		}
 		dataDir = filepath.Join(baseDir, "lockleaf", "vaults")
 	}
 
 	if err := os.MkdirAll(dataDir, 0700); err != nil {
-		return fmt.Errorf("Error creating storage directory: %v\n", err)
+		return fmt.Errorf("error creating storage directory: %v", err)
 	}
 
 	// Setup storage

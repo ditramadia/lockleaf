@@ -8,8 +8,9 @@ import (
 
 var (
 	ErrVaultExists        = errors.New("Vault already exists")
-	ErrCredentialNotFound = errors.New("Credential not found")
+	ErrVaultNotFound      = errors.New("Vault not found")
 	ErrCredentialExists   = errors.New("Credential already exists")
+	ErrCredentialNotFound = errors.New("Credential not found")
 	ErrFieldNotFound      = errors.New("Field not found")
 )
 

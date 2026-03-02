@@ -128,3 +128,16 @@ func (s *Storage) List() ([]string, error) {
 	}
 	return vaults, nil
 }
+
+// Rename physically moves the file on the disk
+func (s *Storage) Rename(oldName, newName string) error {
+	oldPath := s.GetPath(oldName)
+	newPath := s.GetPath(newName)
+
+	// Perform OS rename
+	if err := os.Rename(oldPath, newPath); err != nil {
+		return fmt.Errorf("[ERROR] failed to rename file: '%w'", err)
+	}
+
+	return nil
+}

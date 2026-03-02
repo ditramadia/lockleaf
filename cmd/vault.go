@@ -7,13 +7,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// vaultCmd represents the base vault command
+// VaultCmd represents the base vault command
 var VaultCmd = &cobra.Command{
 	Use:   "vault",
 	Short: "Manage encrypted vaults",
 }
 
-// initCmd represents the 'vault init' command
+// InitCmd represents the 'vault init' command
 var InitCmd = &cobra.Command{
 	Use:   "init [vault_name]",
 	Short: "Initialize a new vault",
@@ -21,8 +21,7 @@ var InitCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		vaultName := args[0]
 
-		err := globalManager.CreateVault(vaultName)
-		if err != nil {
+		if err := globalManager.CreateVault(vaultName); err != nil {
 			fmt.Printf("%v\n", err)
 			os.Exit(1)
 		}
@@ -53,8 +52,26 @@ var ListCmd = &cobra.Command{
 	},
 }
 
+var RenameCmd = &cobra.Command{
+	Use:   "rename",
+	Short: "Rename a vault",
+	Args:  cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		vaultName := args[0]
+		newVaultName := args[1]
+
+		if err := globalManager.RenameVault(vaultName, newVaultName); err != nil {
+			fmt.Printf("%v\n", err)
+			os.Exit(1)
+		}
+
+		fmt.Printf("Vault '%s' renamed to '%s'.\n", vaultName, newVaultName)
+	},
+}
+
 func init() {
 	RootCmd.AddCommand(VaultCmd)
 	VaultCmd.AddCommand(InitCmd)
 	VaultCmd.AddCommand(ListCmd)
+	VaultCmd.AddCommand(RenameCmd)
 }
