@@ -47,35 +47,35 @@ func (s *Storage) Save(v *Vault) error {
 	// Marshal the data
 	data, err := json.MarshalIndent(v, "", "  ")
 	if err != nil {
-		return fmt.Errorf("[ERROR] failed to encode vault: %w", err)
+		return fmt.Errorf("failed to encode vault: %w", err)
 	}
 
 	// Create a temporary file
 	tmpPath := path + ".tmp"
 	tmpFile, err := os.OpenFile(tmpPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
-		return fmt.Errorf("[ERROR] failed to create temp file: %w", err)
+		return fmt.Errorf("failed to create temp file: %w", err)
 	}
 	defer tmpFile.Close()
 
 	// Write the data to temp file
 	if _, err := tmpFile.Write(data); err != nil {
-		return fmt.Errorf("[ERROR] failed to write to temp file: %w", err)
+		return fmt.Errorf("failed to write to temp file: %w", err)
 	}
 
 	// Force sync to physical disk
 	if err := tmpFile.Sync(); err != nil {
-		return fmt.Errorf("[ERROR] failed to sync file: %w", err)
+		return fmt.Errorf("failed to sync file: %w", err)
 	}
 
 	// Close the temp file
 	if err := tmpFile.Close(); err != nil {
-		return fmt.Errorf("[ERROR] failed to close temp file: %w", err)
+		return fmt.Errorf("failed to close temp file: %w", err)
 	}
 
 	// Atomic rename (replaces old file with new one)
 	if err := os.Rename(tmpPath, path); err != nil {
-		return fmt.Errorf("[ERROR] failed to finalize save: %w", err)
+		return fmt.Errorf("failed to finalize save: %w", err)
 	}
 
 	return nil
@@ -89,7 +89,7 @@ func (s *Storage) Load(vaultName string) (*Vault, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return nil, fmt.Errorf("[ERROR] vault '%s' not found", vaultName)
+			return nil, fmt.Errorf("vault '%s' not found", vaultName)
 		}
 		return nil, err
 	}
@@ -98,13 +98,13 @@ func (s *Storage) Load(vaultName string) (*Vault, error) {
 	// Read the file content
 	data, err := io.ReadAll(file)
 	if err != nil {
-		return nil, fmt.Errorf("[ERROR] failed to read vault file: %w", err)
+		return nil, fmt.Errorf("failed to read vault file: %w", err)
 	}
 
 	// Unmarshal the JSON data
 	var v Vault
 	if err := json.Unmarshal(data, &v); err != nil {
-		return nil, fmt.Errorf("[ERROR] failed to parse vault JSON: %w", err)
+		return nil, fmt.Errorf("failed to parse vault JSON: %w", err)
 	}
 
 	return &v, nil

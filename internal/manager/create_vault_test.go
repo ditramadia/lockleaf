@@ -18,20 +18,19 @@ func TestCreateVault(t *testing.T) {
 	manager := NewManager(storage)
 
 	// Test create vault
-	err := manager.CreateVault(vaultName)
-	if err != nil {
-		t.Fatalf("Failed to create vault: %v", err)
+	if err := manager.CreateVault(vaultName); err != nil {
+		t.Fatalf("failed to create vault: %v", err)
 	}
 
 	// Load newly created vault
 	v, err := manager.Storage.Load(vaultName)
 	if err != nil {
-		t.Errorf("Failed to load vault: %v", err)
+		t.Fatalf("failed to load vault: %v", err)
 	}
 
 	// Assert data
 	if v.Name != vaultName {
-		t.Errorf("Expected name test-vault, got %s", v.Name)
+		t.Errorf("expected name '%s', got '%s'", vaultName, v.Name)
 	}
 }
 
@@ -48,11 +47,12 @@ func TestCreateExistingVault(t *testing.T) {
 
 	// Inject a vault
 	existingVault := vault.NewVault(vaultName)
-	manager.Storage.Save(existingVault)
+	if err := manager.Storage.Save(existingVault); err != nil {
+		t.Fatalf("failed to inject vault: %v", err)
+	}
 
 	// Test create vault
-	err := manager.CreateVault(vaultName)
-	if err == nil {
-		t.Fatalf("Expected error when creating an existing vault, got nil")
+	if err := manager.CreateVault(vaultName); err == nil {
+		t.Errorf("expected error when creating an existing vault, got nil")
 	}
 }

@@ -1,62 +1,97 @@
 package vault
 
 import (
-	"os"
-	"path/filepath"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
-// TestSaveAndLoad tests the saving and loading of vaults
-func TestSaveAndLoad(t *testing.T) {
-	// Setup temporary storage for the test
-	tmpDir := t.TempDir()
-	storage := NewStorage(tmpDir)
-
-	// Create a dummy vault
-	v := NewVault("test-vault")
-	v.Credentials["github"] = Credential{
-		Name: "Github",
-		Fields: map[string]Field{
-			"username": {Label: "username", Value: "gopher", IsSecret: false},
-			"password": {Label: "password", Value: "s3cr3t", IsSecret: true},
-		},
+func TestIsVaultExists(t *testing.T) {
+	cases := []struct {
+		name      string
+		vaultName string
+		save      bool
+		want      bool
+	}{
+		{"vault exists", "titus", true, true},
+		{"vault missing", "metaurus", false, false},
 	}
 
-	// Test saving the vault
-	err := storage.Save(v)
-	if err != nil {
-		t.Fatalf("Failed to save vault: %v", err)
-	}
+	for _, c := range cases {
+		tc := c
+		t.Run(tc.name, func(t *testing.T) {
+			s := setupStorage(t)
 
-	// Verify file exists physically
-	expectedPath := filepath.Join(tmpDir, "test-vault.leaf")
-	if _, err := os.Stat(expectedPath); os.IsNotExist(err) {
-		t.Errorf("Vault file was not created at %s", expectedPath)
-	}
+			if tc.save {
+				v := NewVault(tc.vaultName)
+				err := s.Save(v)
+				require.NoError(t, err)
+			}
 
-	// Test loading the vault
-	loadedVault, err := storage.Load("test-vault")
-	if err != nil {
-		t.Fatalf("Failed to load vault: %v", err)
-	}
+			got, err := s.IsVaultExists(tc.vaultName)
+			require.NoError(t, err)
 
-	// Assert data integrity
-	if loadedVault.Name != v.Name {
-		t.Errorf("Expected name %s, got %s", v.Name, loadedVault.Name)
-	}
-
-	if c := loadedVault.Credentials["github"]; c.Name != "Github" {
-		t.Errorf("Missing credential 'github' after load")
+			require.Equal(t, tc.want, got)
+		})
 	}
 }
 
-// TestLoadMissingVault tests loading a non-existent vault
-func TestLoadMissingVault(t *testing.T) {
+func TestSaveAndLoadVault(t *testing.T) {
+	cases := []struct {
+		name       string
+		vaultName  string
+		credential *Credential
+		save       bool
+		wantErr    bool
+	}{
+		{"save and load vault successful", "test-vault", &Credential{
+			Name: "Github",
+			Fields: map[string]Field{
+				"username": {Label: "username", Value: "gopher", IsSecret: false},
+				"password": {Label: "password", Value: "s3cr3t", IsSecret: true},
+			},
+		}, true, false},
+		{"load missing vault", "missing-vault", nil, false, true},
+	}
+
+	for _, c := range cases {
+		tc := c
+		t.Run(tc.name, func(t *testing.T) {
+			s := setupStorage(t)
+
+			if tc.save {
+				v := setupVault(tc.vaultName, tc.credential)
+				err := s.Save(v)
+				require.NoError(t, err)
+			}
+
+			loadedV, err := s.Load(tc.vaultName)
+
+			if tc.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tc.vaultName, loadedV.Name)
+				if tc.credential != nil {
+					cred, ok := loadedV.Credentials[tc.credential.Name]
+					require.True(t, ok)
+					require.Equal(t, *tc.credential, cred)
+				}
+			}
+		})
+	}
+}
+
+func setupStorage(t *testing.T) *Storage {
 	tmpDir := t.TempDir()
 	storage := NewStorage(tmpDir)
 
-	_, err := storage.Load("non-existent")
-	if err == nil {
-		t.Errorf("Expected error when loading non-existent vault, got nil")
-	}
+	return storage
+}
+
+func setupVault(vaultName string, credential *Credential) *Vault {
+	v := NewVault(vaultName)
+	v.Credentials[credential.Name] = *credential
+
+	return v
 }
