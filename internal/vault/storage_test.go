@@ -23,9 +23,7 @@ func TestIsVaultExists(t *testing.T) {
 			s := setupStorage(t)
 
 			if tc.save {
-				v := NewVault(tc.vaultName)
-				err := s.Save(v)
-				require.NoError(t, err)
+				require.NoError(t, s.Save(setupVault(tc.vaultName, nil)))
 			}
 
 			got, err := s.IsVaultExists(tc.vaultName)
@@ -36,22 +34,16 @@ func TestIsVaultExists(t *testing.T) {
 	}
 }
 
-func TestSaveAndLoadVault(t *testing.T) {
+func TestSaveAndLoad(t *testing.T) {
 	cases := []struct {
-		name       string
-		vaultName  string
-		credential *Credential
-		save       bool
-		wantErr    bool
+		name        string
+		vaultName   string
+		credentials map[string]Credential
+		save        bool
+		wantErr     bool
 	}{
-		{"save and load vault successful", "test-vault", &Credential{
-			Name: "Github",
-			Fields: map[string]Field{
-				"username": {Label: "username", Value: "gopher", IsSecret: false},
-				"password": {Label: "password", Value: "s3cr3t", IsSecret: true},
-			},
-		}, true, false},
-		{"load missing vault", "missing-vault", nil, false, true},
+		{"save and load vault successful", "titus", setupCredentials(), true, false},
+		{"load missing vault", "guilliman", nil, false, true},
 	}
 
 	for _, c := range cases {
@@ -60,27 +52,99 @@ func TestSaveAndLoadVault(t *testing.T) {
 			s := setupStorage(t)
 
 			if tc.save {
-				v := setupVault(tc.vaultName, tc.credential)
-				err := s.Save(v)
-				require.NoError(t, err)
+				require.NoError(t, s.Save(setupVault(tc.vaultName, tc.credentials)))
 			}
 
-			loadedV, err := s.Load(tc.vaultName)
+			got, err := s.Load(tc.vaultName)
 
 			if tc.wantErr {
 				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
-				require.Equal(t, tc.vaultName, loadedV.Name)
-				if tc.credential != nil {
-					cred, ok := loadedV.Credentials[tc.credential.Name]
-					require.True(t, ok)
-					require.Equal(t, *tc.credential, cred)
-				}
+				return
+			}
+
+			require.NoError(t, err)
+			require.Equal(t, tc.vaultName, got.Name)
+			if tc.credentials != nil {
+				require.Equal(t, tc.credentials, got.Credentials)
 			}
 		})
 	}
 }
+
+func TestList(t *testing.T) {
+	cases := []struct {
+		name string
+		want []string
+	}{
+		{"list vaults successful", []string{"metaurus", "icaron", "levantus", "titus"}},
+	}
+
+	for _, c := range cases {
+		tc := c
+		t.Run(tc.name, func(t *testing.T) {
+			s := setupStorage(t)
+			for _, vName := range tc.want {
+				require.NoError(t, s.Save(setupVault(vName, nil)))
+			}
+
+			got, err := s.List()
+			require.NoError(t, err)
+
+			require.ElementsMatch(t, tc.want, got)
+		})
+	}
+}
+
+func TestRename(t *testing.T) {
+	cases := []struct {
+		name         string
+		oldVaultName string
+		newVaultName string
+		credentials  map[string]Credential
+		save         bool
+		exist        bool
+		wantErr      bool
+	}{
+		{"rename vault successful", "metasaur", "titus", setupCredentials(), true, false, false},
+		{"rename missing vault", "guilliman", "titus", setupCredentials(), false, false, true},
+		{"rename into an existing vault", "metasaur", "titus", setupCredentials(), true, true, true},
+	}
+
+	for _, c := range cases {
+		tc := c
+		t.Run(tc.name, func(t *testing.T) {
+			s := setupStorage(t)
+
+			if tc.exist {
+				require.NoError(t, s.Save(setupVault(tc.newVaultName, tc.credentials)))
+			}
+
+			if tc.save {
+				require.NoError(t, s.Save(setupVault(tc.oldVaultName, tc.credentials)))
+			}
+
+			err := s.Rename(tc.oldVaultName, tc.newVaultName)
+
+			if tc.wantErr {
+				require.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+
+			loadedVault, err := s.Load(tc.newVaultName)
+			require.NoError(t, err)
+
+			require.Equal(t, tc.newVaultName, loadedVault.Name)
+			require.Equal(t, tc.credentials, loadedVault.Credentials)
+
+			_, err = s.Load(tc.oldVaultName)
+			require.Error(t, err)
+		})
+	}
+}
+
+// Internal helpers
 
 func setupStorage(t *testing.T) *Storage {
 	tmpDir := t.TempDir()
@@ -89,9 +153,25 @@ func setupStorage(t *testing.T) *Storage {
 	return storage
 }
 
-func setupVault(vaultName string, credential *Credential) *Vault {
+func setupVault(vaultName string, credentials map[string]Credential) *Vault {
 	v := NewVault(vaultName)
-	v.Credentials[credential.Name] = *credential
+	if credentials != nil {
+		v.Credentials = credentials
+	}
 
 	return v
+}
+
+func setupCredentials() map[string]Credential {
+	c := &Credential{
+		Name: "Github",
+		Fields: map[string]Field{
+			"username": {Label: "username", Value: "gopher", IsSecret: false},
+			"password": {Label: "password", Value: "s3cr3t", IsSecret: true},
+		},
+	}
+
+	return map[string]Credential{
+		c.Name: *c,
+	}
 }

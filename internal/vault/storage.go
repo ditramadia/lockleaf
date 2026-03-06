@@ -134,9 +134,28 @@ func (s *Storage) Rename(oldName, newName string) error {
 	oldPath := s.GetPath(oldName)
 	newPath := s.GetPath(newName)
 
+	// Validate new vault name
+	exists, err := s.IsVaultExists(newName)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return fmt.Errorf("vault with the name '%s' already exists", newName)
+	}
+
 	// Perform OS rename
 	if err := os.Rename(oldPath, newPath); err != nil {
 		return fmt.Errorf("[ERROR] failed to rename file: '%w'", err)
+	}
+
+	// Rename internal vault name
+	v, err := s.Load(newName)
+	if err != nil {
+		return err
+	}
+	v.Name = newName
+	if err := s.Save(v); err != nil {
+		return err
 	}
 
 	return nil
