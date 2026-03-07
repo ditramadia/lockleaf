@@ -19,7 +19,6 @@ var vaultCmd = &cobra.Command{
 	Aliases: []string{"v"},
 	Short:   "Manage encrypted vaults",
 	Run: func(cmd *cobra.Command, args []string) {
-
 		// Connect to a vault
 		if connectName != "" {
 			exists, err := globalManager.IsVaultExist(connectName)
@@ -43,42 +42,58 @@ var vaultCmd = &cobra.Command{
 			return
 		}
 
-		// List all available vaults
+		// Initialize a new vault
+		if len(args) > 0 {
+			vaultName := args[0]
 
-		vaults, err := globalManager.ListVaults()
-		if err != nil {
-			fmt.Println(ui.Error.Render(err.Error()))
-			os.Exit(1)
-		}
-
-		if len(vaults) == 0 {
-			fmt.Println(ui.Normal.Render("No vaults found."))
-			fmt.Println(ui.Tips.MarginLeft(2).Render("(Use \"leaf vault init <name>\" to create a vault)"))
-			os.Exit(1)
-		}
-
-		activeVault := config.GetActiveVault()
-		items := make([]any, len(vaults))
-		for i, v := range vaults {
-			// 2. Check if this is the active one
-			if v == activeVault {
-				// Style ONLY this item
-				items[i] = ui.Info.Bold(true).Render(v + " (active)")
-			} else {
-				// Keep the rest normal
-				items[i] = ui.Normal.Render(v)
+			if err := globalManager.CreateVault(vaultName); err != nil {
+				fmt.Println(ui.Error.Render(err.Error()))
+				os.Exit(1)
 			}
+
+			successMsg := fmt.Sprintf("Vault '%s' initialized.", vaultName)
+			fmt.Println(ui.Success.Render(successMsg))
+
+			os.Exit(0)
 		}
 
-		l := list.New(items...).
-			Enumerator(func(_ list.Items, i int) string {
-				return ui.BulletStyle.Render("•")
-			})
+		// List all available vaults
+		{
+			vaults, err := globalManager.ListVaults()
+			if err != nil {
+				fmt.Println(ui.Error.Render(err.Error()))
+				os.Exit(1)
+			}
 
-		fmt.Println(ui.Normal.MarginTop(1).Render("Available Vaults:"))
-		fmt.Println(ui.ListStyle.Render(l.String()))
+			if len(vaults) == 0 {
+				fmt.Println(ui.Normal.Render("No vaults found."))
+				fmt.Println(ui.Tips.MarginLeft(2).Render("(Use \"leaf vault init <name>\" to create a vault)"))
+				os.Exit(1)
+			}
 
-		os.Exit(0)
+			activeVault := config.GetActiveVault()
+			items := make([]any, len(vaults))
+			for i, v := range vaults {
+				// 2. Check if this is the active one
+				if v == activeVault {
+					// Style ONLY this item
+					items[i] = ui.Info.Bold(true).Render(v + " (active)")
+				} else {
+					// Keep the rest normal
+					items[i] = ui.Normal.Render(v)
+				}
+			}
+
+			l := list.New(items...).
+				Enumerator(func(_ list.Items, i int) string {
+					return ui.BulletStyle.Render("•")
+				})
+
+			fmt.Println(ui.Normal.MarginTop(1).Render("Available Vaults:"))
+			fmt.Println(ui.ListStyle.Render(l.String()))
+
+			os.Exit(0)
+		}
 	},
 }
 
@@ -97,38 +112,6 @@ var initCmd = &cobra.Command{
 
 		successMsg := fmt.Sprintf("Vault '%s' initialized.", vaultName)
 		fmt.Println(ui.Success.Render(successMsg))
-	},
-}
-
-var listCmd = &cobra.Command{
-	Use:   "ls",
-	Short: "List all available vaults",
-	Run: func(cmd *cobra.Command, args []string) {
-		vaults, err := globalManager.ListVaults()
-		if err != nil {
-			fmt.Println(ui.Error.Render(err.Error()))
-			os.Exit(1)
-		}
-
-		if len(vaults) == 0 {
-			fmt.Println(ui.Normal.Render("No vaults found."))
-			fmt.Println(ui.Tips.MarginLeft(2).Render("(Use \"leaf vault init <name>\" to create a vault)"))
-			os.Exit(1)
-		}
-
-		items := make([]any, len(vaults))
-		for i, v := range vaults {
-			items[i] = v
-		}
-
-		l := list.New(items...).
-			Enumerator(func(_ list.Items, i int) string {
-				return ui.BulletStyle.Render("•")
-			}).
-			ItemStyle(ui.Normal)
-
-		fmt.Println(ui.Normal.MarginTop(1).Render("Available Vaults:"))
-		fmt.Println(ui.ListStyle.Render(l.String()))
 	},
 }
 
@@ -210,7 +193,6 @@ func init() {
 
 	rootCmd.AddCommand(vaultCmd)
 	vaultCmd.AddCommand(initCmd)
-	vaultCmd.AddCommand(listCmd)
 	vaultCmd.AddCommand(renameCmd)
 	vaultCmd.AddCommand(removeCmd)
 }
