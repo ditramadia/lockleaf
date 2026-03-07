@@ -146,6 +146,33 @@ func TestRemoveVault(t *testing.T) {
 	}
 }
 
+func TestIsVaultExist(t *testing.T) {
+	cases := []struct {
+		name         string
+		vaultName    string
+		isVaultExist bool
+	}{
+		{"vault exists", "titus", true},
+		{"vault missing", "guilliman", false},
+	}
+
+	for _, c := range cases {
+		tc := c
+		t.Run(tc.name, func(t *testing.T) {
+			s := newTestStorage(t)
+
+			if tc.isVaultExist {
+				require.NoError(t, s.Save(newTestVault(tc.vaultName, nil)))
+			}
+
+			got, err := newTestManager(s).IsVaultExist(tc.vaultName)
+
+			require.NoError(t, err)
+			require.Equal(t, tc.isVaultExist, got)
+		})
+	}
+}
+
 // Internal helpers
 
 func newTestStorage(t *testing.T) *vault.Storage {
