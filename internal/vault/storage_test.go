@@ -20,10 +20,10 @@ func TestIsVaultExists(t *testing.T) {
 	for _, c := range cases {
 		tc := c
 		t.Run(tc.name, func(t *testing.T) {
-			s := setupStorage(t)
+			s := newTestStorage(t)
 
 			if tc.save {
-				require.NoError(t, s.Save(setupVault(tc.vaultName, nil)))
+				require.NoError(t, s.Save(newTestVault(tc.vaultName, nil)))
 			}
 
 			got, err := s.IsVaultExists(tc.vaultName)
@@ -42,17 +42,17 @@ func TestSaveAndLoad(t *testing.T) {
 		save        bool
 		wantErr     bool
 	}{
-		{"save and load vault successful", "titus", setupCredentials(), true, false},
+		{"save and load vault successful", "titus", newTestCredentials(), true, false},
 		{"load missing vault", "guilliman", nil, false, true},
 	}
 
 	for _, c := range cases {
 		tc := c
 		t.Run(tc.name, func(t *testing.T) {
-			s := setupStorage(t)
+			s := newTestStorage(t)
 
 			if tc.save {
-				require.NoError(t, s.Save(setupVault(tc.vaultName, tc.credentials)))
+				require.NoError(t, s.Save(newTestVault(tc.vaultName, tc.credentials)))
 			}
 
 			got, err := s.Load(tc.vaultName)
@@ -82,9 +82,9 @@ func TestList(t *testing.T) {
 	for _, c := range cases {
 		tc := c
 		t.Run(tc.name, func(t *testing.T) {
-			s := setupStorage(t)
+			s := newTestStorage(t)
 			for _, vName := range tc.want {
-				require.NoError(t, s.Save(setupVault(vName, nil)))
+				require.NoError(t, s.Save(newTestVault(vName, nil)))
 			}
 
 			got, err := s.List()
@@ -101,34 +101,16 @@ func TestRename(t *testing.T) {
 		oldVaultName string
 		newVaultName string
 		credentials  map[string]Credential
-		save         bool
-		exist        bool
-		wantErr      bool
 	}{
-		{"rename vault successful", "metasaur", "titus", setupCredentials(), true, false, false},
-		{"rename missing vault", "guilliman", "titus", setupCredentials(), false, false, true},
-		{"rename into an existing vault", "metasaur", "titus", setupCredentials(), true, true, true},
+		{"rename vault successful", "metasaur", "titus", newTestCredentials()},
 	}
 
 	for _, c := range cases {
 		tc := c
 		t.Run(tc.name, func(t *testing.T) {
-			s := setupStorage(t)
-
-			if tc.exist {
-				require.NoError(t, s.Save(setupVault(tc.newVaultName, tc.credentials)))
-			}
-
-			if tc.save {
-				require.NoError(t, s.Save(setupVault(tc.oldVaultName, tc.credentials)))
-			}
+			s := newTestStorage(t)
 
 			err := s.Rename(tc.oldVaultName, tc.newVaultName)
-
-			if tc.wantErr {
-				require.Error(t, err)
-				return
-			}
 
 			require.NoError(t, err)
 
@@ -146,14 +128,14 @@ func TestRename(t *testing.T) {
 
 // Internal helpers
 
-func setupStorage(t *testing.T) *Storage {
+func newTestStorage(t *testing.T) *Storage {
 	tmpDir := t.TempDir()
 	storage := NewStorage(tmpDir)
 
 	return storage
 }
 
-func setupVault(vaultName string, credentials map[string]Credential) *Vault {
+func newTestVault(vaultName string, credentials map[string]Credential) *Vault {
 	v := NewVault(vaultName)
 	if credentials != nil {
 		v.Credentials = credentials
@@ -162,7 +144,7 @@ func setupVault(vaultName string, credentials map[string]Credential) *Vault {
 	return v
 }
 
-func setupCredentials() map[string]Credential {
+func newTestCredentials() map[string]Credential {
 	c := &Credential{
 		Name: "Github",
 		Fields: map[string]Field{

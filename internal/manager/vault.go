@@ -35,7 +35,7 @@ func (m *Manager) ListVaults() ([]string, error) {
 
 // RenameVault renames a vault
 func (m *Manager) RenameVault(name, newName string) error {
-	// Check if vault already exists
+	// Check if vault exists
 	exists, err := m.Storage.IsVaultExists(name)
 	if err != nil {
 		return fmt.Errorf("Error checking vault existance: %w", err)
