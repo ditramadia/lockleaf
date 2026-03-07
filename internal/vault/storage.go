@@ -151,3 +151,18 @@ func (s *Storage) Rename(oldName, newName string) error {
 
 	return nil
 }
+
+// Remove deletes the vault file from the disk
+func (s *Storage) Remove(name string) error {
+	path := s.GetPath(name)
+
+	// Remove the file
+	if err := os.Remove(path); err != nil {
+		if os.IsNotExist(err) {
+			return fmt.Errorf("vault '%s' does not exist", name)
+		}
+		return fmt.Errorf("failed to remove vault file: %w", err)
+	}
+
+	return nil
+}
