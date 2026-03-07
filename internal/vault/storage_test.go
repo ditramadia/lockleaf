@@ -26,7 +26,7 @@ func TestIsVaultExists(t *testing.T) {
 				require.NoError(t, s.Save(newTestVault(tc.vaultName, nil)))
 			}
 
-			got, err := s.IsVaultExists(tc.vaultName)
+			got, err := s.IsVaultExist(tc.vaultName)
 			require.NoError(t, err)
 
 			require.Equal(t, tc.want, got)
@@ -155,7 +155,7 @@ func TestRemove(t *testing.T) {
 			}
 			require.NoError(t, err)
 
-			got, err := s.IsVaultExists(tc.vaultName)
+			got, err := s.IsVaultExist(tc.vaultName)
 			require.NoError(t, err)
 			require.False(t, got)
 		})

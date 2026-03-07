@@ -24,7 +24,7 @@ func (s *Storage) GetPath(vaultName string) string {
 }
 
 // IsVaultExists checks if a vault exist by name
-func (s *Storage) IsVaultExists(vaultName string) (bool, error) {
+func (s *Storage) IsVaultExist(vaultName string) (bool, error) {
 	path := s.GetPath(vaultName)
 
 	// Open the vault file

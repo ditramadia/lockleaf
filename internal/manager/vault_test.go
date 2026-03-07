@@ -139,7 +139,7 @@ func TestRemoveVault(t *testing.T) {
 			}
 			require.NoError(t, err)
 
-			got, err := s.IsVaultExists(tc.name)
+			got, err := s.IsVaultExist(tc.name)
 			require.NoError(t, err)
 			require.False(t, got)
 		})

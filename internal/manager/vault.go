@@ -9,7 +9,7 @@ import (
 // CreateVault creates a new vault
 func (m *Manager) CreateVault(name string) error {
 	// Check if vault already exists
-	exists, err := m.Storage.IsVaultExists(name)
+	exists, err := m.Storage.IsVaultExist(name)
 	if err != nil {
 		return fmt.Errorf("Error checking vault existance: %w", err)
 	}
@@ -36,7 +36,7 @@ func (m *Manager) ListVaults() ([]string, error) {
 // RenameVault renames a vault
 func (m *Manager) RenameVault(name, newName string) error {
 	// Check if vault exists
-	exists, err := m.Storage.IsVaultExists(name)
+	exists, err := m.Storage.IsVaultExist(name)
 	if err != nil {
 		return fmt.Errorf("Error checking vault existance: %w", err)
 	}
@@ -45,7 +45,7 @@ func (m *Manager) RenameVault(name, newName string) error {
 	}
 
 	// Check if vault with newName already exists
-	exists, err = m.Storage.IsVaultExists(newName)
+	exists, err = m.Storage.IsVaultExist(newName)
 	if err != nil {
 		return fmt.Errorf("Error checking vault existance: %w", err)
 	}
@@ -63,8 +63,10 @@ func (m *Manager) RenameVault(name, newName string) error {
 
 func (m *Manager) RemoveVault(name string) error {
 	// Check if vault exists
-	exists, err := m.Storage.IsVaultExists(name)
+	exists, err := m.Storage.IsVaultExist(name)
 	if err != nil {
+		fmt.Println("Confirmation failed.")
+		fmt.Println("Aborted.")
 		return fmt.Errorf("Error checking vault existance: %w", err)
 	}
 	if !exists {
@@ -81,7 +83,7 @@ func (m *Manager) RemoveVault(name string) error {
 
 func (m *Manager) IsVaultExist(name string) (bool, error) {
 	// Check if vault exists
-	exists, err := m.Storage.IsVaultExists(name)
+	exists, err := m.Storage.IsVaultExist(name)
 	if err != nil {
 		return false, fmt.Errorf("Error checking vault existance: %w", err)
 	}

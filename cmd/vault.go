@@ -85,26 +85,25 @@ var removeCmd = &cobra.Command{
 			os.Exit(1)
 		}
 		if !exists {
-			fmt.Printf("Vault '%s' not found.\n", vaultName)
+			fmt.Println("Vault not found.")
 			os.Exit(1)
 		}
 
+		// Prompt user for confirmation
 		if !forceDelete {
-			fmt.Printf("WARNING: You are about to delete the vault '%s'.\n", vaultName)
-			fmt.Println("WARNING: This action is permanent.")
 
 			confirm := ""
 			match := "vault/" + vaultName
+
 			prompt := &survey.Input{
 				Message: fmt.Sprintf("Type '%s' to confirm deletion:", match),
 			}
-
 			survey.AskOne(prompt, &confirm)
 
 			if confirm != match {
 				fmt.Println("Confirmation failed.")
 				fmt.Println("Aborted.")
-				return
+				os.Exit(0)
 			}
 		}
 
