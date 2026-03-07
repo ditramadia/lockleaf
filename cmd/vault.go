@@ -6,17 +6,80 @@ import (
 
 	"charm.land/lipgloss/v2/list"
 	"github.com/AlecAivazis/survey/v2"
+	"github.com/ditramadia/lockleaf/internal/config"
 	"github.com/ditramadia/lockleaf/internal/ui"
 	"github.com/spf13/cobra"
 )
 
+var connectName string
 var forceDelete bool
 
-// VaultCmd represents the base vault command
 var vaultCmd = &cobra.Command{
 	Use:     "vault",
 	Aliases: []string{"v"},
 	Short:   "Manage encrypted vaults",
+	Run: func(cmd *cobra.Command, args []string) {
+
+		// Connect to a vault
+		if connectName != "" {
+			exists, err := globalManager.IsVaultExist(connectName)
+			if err != nil {
+				fmt.Println(ui.Error.Render(err.Error()))
+				os.Exit(1)
+			}
+			if !exists {
+				fmt.Println(ui.Error.Render("Vault not found."))
+				fmt.Println(ui.Tips.MarginLeft(2).Render("(Use \"leaf vault\" to list vaults)"))
+				os.Exit(1)
+			}
+
+			if err := config.SetActiveVault(connectName); err != nil {
+				fmt.Println(ui.Error.Render("Failed to connect."))
+				os.Exit(1)
+			}
+
+			successMsg := fmt.Sprintf("Vault '%s' connected.", connectName)
+			fmt.Println(ui.Success.Render(successMsg))
+			return
+		}
+
+		// List all available vaults
+
+		vaults, err := globalManager.ListVaults()
+		if err != nil {
+			fmt.Println(ui.Error.Render(err.Error()))
+			os.Exit(1)
+		}
+
+		if len(vaults) == 0 {
+			fmt.Println(ui.Normal.Render("No vaults found."))
+			fmt.Println(ui.Tips.MarginLeft(2).Render("(Use \"leaf vault init <name>\" to create a vault)"))
+			os.Exit(1)
+		}
+
+		activeVault := config.GetActiveVault()
+		items := make([]any, len(vaults))
+		for i, v := range vaults {
+			// 2. Check if this is the active one
+			if v == activeVault {
+				// Style ONLY this item
+				items[i] = ui.Info.Bold(true).Render(v + " (active)")
+			} else {
+				// Keep the rest normal
+				items[i] = ui.Normal.Render(v)
+			}
+		}
+
+		l := list.New(items...).
+			Enumerator(func(_ list.Items, i int) string {
+				return ui.BulletStyle.Render("•")
+			})
+
+		fmt.Println(ui.Normal.MarginTop(1).Render("Available Vaults:"))
+		fmt.Println(ui.ListStyle.Render(l.String()))
+
+		os.Exit(0)
+	},
 }
 
 // InitCmd represents the 'vault init' command
@@ -49,7 +112,7 @@ var listCmd = &cobra.Command{
 
 		if len(vaults) == 0 {
 			fmt.Println(ui.Normal.Render("No vaults found."))
-			fmt.Println(ui.Tips.MarginLeft(2).Render("(Use \"pw vault init <name>\" to create a vault)"))
+			fmt.Println(ui.Tips.MarginLeft(2).Render("(Use \"leaf vault init <name>\" to create a vault)"))
 			os.Exit(1)
 		}
 
@@ -103,7 +166,7 @@ var removeCmd = &cobra.Command{
 		}
 		if !exists {
 			fmt.Println(ui.Error.Render("Vault not found."))
-			fmt.Println(ui.Tips.MarginLeft(2).Render("(Use \"pw vault ls\" to list vaults)"))
+			fmt.Println(ui.Tips.MarginLeft(2).Render("(Use \"leaf vault ls\" to list vaults)"))
 			os.Exit(1)
 		}
 
@@ -142,6 +205,7 @@ var removeCmd = &cobra.Command{
 }
 
 func init() {
+	vaultCmd.Flags().StringVarP(&connectName, "connect", "c", "", "Connect to a specific vault")
 	removeCmd.Flags().BoolVarP(&forceDelete, "force", "f", false, "Skip confirmation prompt")
 
 	rootCmd.AddCommand(vaultCmd)
