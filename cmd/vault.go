@@ -69,9 +69,26 @@ var RenameCmd = &cobra.Command{
 	},
 }
 
+var RemoveCmd = &cobra.Command{
+	Use:   "rm",
+	Short: "Remove a vault",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		vaultName := args[0]
+
+		if err := globalManager.RemoveVault(vaultName); err != nil {
+			fmt.Printf("%v\n", err)
+			os.Exit(1)
+		}
+
+		fmt.Printf("Vault '%s' removed.\n", vaultName)
+	},
+}
+
 func init() {
 	RootCmd.AddCommand(VaultCmd)
 	VaultCmd.AddCommand(InitCmd)
 	VaultCmd.AddCommand(ListCmd)
 	VaultCmd.AddCommand(RenameCmd)
+	VaultCmd.AddCommand(RemoveCmd)
 }
