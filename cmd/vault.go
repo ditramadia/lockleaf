@@ -13,6 +13,7 @@ import (
 
 var connect string
 var delete string
+var modify string
 var force bool
 
 var vaultCmd = &cobra.Command{
@@ -86,8 +87,8 @@ var vaultCmd = &cobra.Command{
 			}
 
 			activeVault := config.GetActiveVault()
-			isDeleteCurrentVault := activeVault == delete
-			if isDeleteCurrentVault {
+			isActive := activeVault == delete
+			if isActive {
 				if err := config.SetActiveVault(""); err != nil {
 					fmt.Println(ui.Error.Render(err.Error()))
 					os.Exit(1)
@@ -97,7 +98,7 @@ var vaultCmd = &cobra.Command{
 			if err := globalManager.RemoveVault(vaultName); err != nil {
 
 				// Rollback config active vault
-				if isDeleteCurrentVault {
+				if isActive {
 					if err := config.SetActiveVault(activeVault); err != nil {
 						fmt.Println(ui.Error.Render(err.Error()))
 						os.Exit(1)
@@ -114,8 +115,38 @@ var vaultCmd = &cobra.Command{
 			os.Exit(0)
 		}
 
+		// Rename a vault
+		if modify != "" {
+			newVaultName := modify
+			var vaultName string
+
+			if len(args) == 1 {
+				// Rename another vault
+				vaultName = args[0]
+			} else {
+				// Rename current vault
+				vaultName = config.GetActiveVault()
+				if err := config.SetActiveVault(newVaultName); err != nil {
+					fmt.Println(ui.Error.Render(err.Error()))
+					os.Exit(1)
+				}
+			}
+
+			if err := globalManager.RenameVault(vaultName, newVaultName); err != nil {
+				fmt.Println(ui.Error.Render(err.Error()))
+				os.Exit(1)
+			}
+
+			styledNewName := ui.Info.Bold(true).Render(newVaultName)
+			fmt.Println(ui.Success.Render(
+				fmt.Sprintf("Vault '%s' renamed to '%s'.", vaultName, styledNewName),
+			))
+
+			os.Exit(0)
+		}
+
 		// Initialize a new vault
-		if len(args) > 0 {
+		if len(args) == 1 {
 			vaultName := args[0]
 
 			if err := globalManager.CreateVault(vaultName); err != nil {
@@ -169,31 +200,11 @@ var vaultCmd = &cobra.Command{
 	},
 }
 
-var renameCmd = &cobra.Command{
-	Use:   "rename",
-	Short: "Rename a vault",
-	Args:  cobra.ExactArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
-		vaultName := args[0]
-		newVaultName := args[1]
-
-		if err := globalManager.RenameVault(vaultName, newVaultName); err != nil {
-			fmt.Println(ui.Error.Render(err.Error()))
-			os.Exit(1)
-		}
-
-		styledNewName := ui.Info.Bold(true).Render(newVaultName)
-		fmt.Println(ui.Success.Render(
-			fmt.Sprintf("Vault '%s' renamed to '%s'.", vaultName, styledNewName),
-		))
-	},
-}
-
 func init() {
 	vaultCmd.Flags().StringVarP(&connect, "connect", "c", "", "Connect to a specific vault")
 	vaultCmd.Flags().StringVarP(&delete, "delete", "d", "", "Delete a vault")
+	vaultCmd.Flags().StringVarP(&modify, "modify", "m", "", "Rename a vault")
 	vaultCmd.Flags().BoolVarP(&force, "force", "f", false, "Skip confirmation prompt")
 
 	rootCmd.AddCommand(vaultCmd)
-	vaultCmd.AddCommand(renameCmd)
 }
