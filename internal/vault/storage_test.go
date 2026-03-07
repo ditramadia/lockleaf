@@ -8,10 +8,10 @@ import (
 
 func TestIsVaultExists(t *testing.T) {
 	cases := []struct {
-		name      string
-		vaultName string
-		save      bool
-		want      bool
+		name         string
+		vaultName    string
+		isVaultExist bool
+		want         bool
 	}{
 		{"vault exists", "titus", true, true},
 		{"vault missing", "metaurus", false, false},
@@ -22,7 +22,7 @@ func TestIsVaultExists(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			s := newTestStorage(t)
 
-			if tc.save {
+			if tc.isVaultExist {
 				require.NoError(t, s.Save(newTestVault(tc.vaultName, nil)))
 			}
 
@@ -36,11 +36,11 @@ func TestIsVaultExists(t *testing.T) {
 
 func TestSaveAndLoad(t *testing.T) {
 	cases := []struct {
-		name        string
-		vaultName   string
-		credentials map[string]Credential
-		save        bool
-		wantErr     bool
+		name         string
+		vaultName    string
+		credentials  map[string]Credential
+		isVaultExist bool
+		wantErr      bool
 	}{
 		{"save and load vault successful", "titus", newTestCredentials(), true, false},
 		{"load missing vault", "guilliman", nil, false, true},
@@ -51,7 +51,7 @@ func TestSaveAndLoad(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			s := newTestStorage(t)
 
-			if tc.save {
+			if tc.isVaultExist {
 				require.NoError(t, s.Save(newTestVault(tc.vaultName, tc.credentials)))
 			}
 
@@ -109,6 +109,7 @@ func TestRename(t *testing.T) {
 		tc := c
 		t.Run(tc.name, func(t *testing.T) {
 			s := newTestStorage(t)
+			require.NoError(t, s.Save(newTestVault(tc.oldVaultName, tc.credentials)))
 
 			err := s.Rename(tc.oldVaultName, tc.newVaultName)
 
@@ -122,6 +123,41 @@ func TestRename(t *testing.T) {
 
 			_, err = s.Load(tc.oldVaultName)
 			require.Error(t, err)
+		})
+	}
+}
+
+func TestRemove(t *testing.T) {
+	cases := []struct {
+		name         string
+		vaultName    string
+		isVaultExist bool
+		wantErr      bool
+	}{
+		{"remove vault successful", "titus", true, false},
+		{"remove missing vault", "titus", false, true},
+	}
+
+	for _, c := range cases {
+		tc := c
+		t.Run(tc.name, func(t *testing.T) {
+			s := newTestStorage(t)
+
+			if tc.isVaultExist {
+				require.NoError(t, s.Save(newTestVault(tc.vaultName, nil)))
+			}
+
+			err := s.Remove(tc.vaultName)
+
+			if tc.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+
+			got, err := s.IsVaultExists(tc.vaultName)
+			require.NoError(t, err)
+			require.False(t, got)
 		})
 	}
 }
