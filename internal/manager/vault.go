@@ -60,3 +60,21 @@ func (m *Manager) RenameVault(name, newName string) error {
 
 	return nil
 }
+
+func (m *Manager) RemoveVault(name string) error {
+	// Check if vault exists
+	exists, err := m.Storage.IsVaultExists(name)
+	if err != nil {
+		return fmt.Errorf("Error checking vault existance: %w", err)
+	}
+	if !exists {
+		return ErrVaultNotFound
+	}
+
+	// Remove the vault
+	if err = m.Storage.Remove(name); err != nil {
+		return fmt.Errorf("Error removing the vault: %w", err)
+	}
+
+	return nil
+}
