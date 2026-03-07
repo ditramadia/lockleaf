@@ -13,7 +13,7 @@ import (
 var globalManager *manager.Manager
 var customPath string
 
-var RootCmd = &cobra.Command{
+var rootCmd = &cobra.Command{
 	Use:   "pw",
 	Short: "Lockleaf: A secure CLI password manager",
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
@@ -26,11 +26,11 @@ var RootCmd = &cobra.Command{
 }
 
 func init() {
-	RootCmd.PersistentFlags().StringVarP(&customPath, "path", "p", "", "custom path for vault files")
+	rootCmd.PersistentFlags().StringVarP(&customPath, "path", "p", "", "custom path for vault files")
 }
 
 func Execute() error {
-	return RootCmd.Execute()
+	return rootCmd.Execute()
 }
 
 func Setup() error {

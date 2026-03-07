@@ -4,17 +4,20 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
 )
 
+var forceDelete bool
+
 // VaultCmd represents the base vault command
-var VaultCmd = &cobra.Command{
+var vaultCmd = &cobra.Command{
 	Use:   "vault",
 	Short: "Manage encrypted vaults",
 }
 
 // InitCmd represents the 'vault init' command
-var InitCmd = &cobra.Command{
+var initCmd = &cobra.Command{
 	Use:   "init [vault_name]",
 	Short: "Initialize a new vault",
 	Args:  cobra.ExactArgs(1),
@@ -30,7 +33,7 @@ var InitCmd = &cobra.Command{
 	},
 }
 
-var ListCmd = &cobra.Command{
+var listCmd = &cobra.Command{
 	Use:   "ls",
 	Short: "List all available vaults",
 	Run: func(cmd *cobra.Command, args []string) {
@@ -52,7 +55,7 @@ var ListCmd = &cobra.Command{
 	},
 }
 
-var RenameCmd = &cobra.Command{
+var renameCmd = &cobra.Command{
 	Use:   "rename",
 	Short: "Rename a vault",
 	Args:  cobra.ExactArgs(2),
@@ -69,12 +72,41 @@ var RenameCmd = &cobra.Command{
 	},
 }
 
-var RemoveCmd = &cobra.Command{
+var removeCmd = &cobra.Command{
 	Use:   "rm",
 	Short: "Remove a vault",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		vaultName := args[0]
+
+		exists, err := globalManager.IsVaultExist(vaultName)
+		if err != nil {
+			fmt.Printf("%v\n", err)
+			os.Exit(1)
+		}
+		if !exists {
+			fmt.Printf("Vault '%s' not found.\n", vaultName)
+			os.Exit(1)
+		}
+
+		if !forceDelete {
+			fmt.Printf("WARNING: You are about to delete the vault '%s'.\n", vaultName)
+			fmt.Println("WARNING: This action is permanent.")
+
+			confirm := ""
+			match := "vault/" + vaultName
+			prompt := &survey.Input{
+				Message: fmt.Sprintf("Type '%s' to confirm deletion:", match),
+			}
+
+			survey.AskOne(prompt, &confirm)
+
+			if confirm != match {
+				fmt.Println("Confirmation failed.")
+				fmt.Println("Aborted.")
+				return
+			}
+		}
 
 		if err := globalManager.RemoveVault(vaultName); err != nil {
 			fmt.Printf("%v\n", err)
@@ -86,9 +118,11 @@ var RemoveCmd = &cobra.Command{
 }
 
 func init() {
-	RootCmd.AddCommand(VaultCmd)
-	VaultCmd.AddCommand(InitCmd)
-	VaultCmd.AddCommand(ListCmd)
-	VaultCmd.AddCommand(RenameCmd)
-	VaultCmd.AddCommand(RemoveCmd)
+	removeCmd.Flags().BoolVarP(&forceDelete, "force", "f", false, "Skip confirmation prompt")
+
+	rootCmd.AddCommand(vaultCmd)
+	vaultCmd.AddCommand(initCmd)
+	vaultCmd.AddCommand(listCmd)
+	vaultCmd.AddCommand(renameCmd)
+	vaultCmd.AddCommand(removeCmd)
 }
