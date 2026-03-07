@@ -14,8 +14,9 @@ var forceDelete bool
 
 // VaultCmd represents the base vault command
 var vaultCmd = &cobra.Command{
-	Use:   "vault",
-	Short: "Manage encrypted vaults",
+	Use:     "vault",
+	Aliases: []string{"v"},
+	Short:   "Manage encrypted vaults",
 }
 
 // InitCmd represents the 'vault init' command

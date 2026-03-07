@@ -14,8 +14,9 @@ var globalManager *manager.Manager
 var customPath string
 
 var rootCmd = &cobra.Command{
-	Use:   "pw",
-	Short: "Lockleaf: A secure CLI password manager",
+	Use:        "leaf",
+	Short:      "Lockleaf: A secure CLI password manager",
+	SuggestFor: []string{"pw"},
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		err := Setup()
 		if err != nil {
