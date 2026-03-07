@@ -9,10 +9,10 @@ import (
 
 func TestCreateVault(t *testing.T) {
 	cases := []struct {
-		name      string
-		vaultName string
-		exists    bool
-		wantErr   bool
+		name         string
+		vaultName    string
+		isVaultExist bool
+		wantErr      bool
 	}{
 		{"create vault successful", "titus", false, false},
 		{"vault exists", "titus", true, true},
@@ -23,7 +23,7 @@ func TestCreateVault(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			s := newTestStorage(t)
 
-			if tc.exists {
+			if tc.isVaultExist {
 				require.NoError(t, s.Save(newTestVault(tc.vaultName, nil)))
 			}
 
@@ -108,6 +108,40 @@ func TestRenameVaults(t *testing.T) {
 			require.Equal(t, tc.credentials, got.Credentials)
 			_, err = s.Load(tc.oldVaultName)
 			require.Error(t, err)
+		})
+	}
+}
+
+func TestRemoveVault(t *testing.T) {
+	cases := []struct {
+		name         string
+		vaultName    string
+		isVaultExist bool
+		wantErr      bool
+	}{
+		{"remove vault successful", "titus", true, false},
+		{"remove missing vault", "titus", false, true},
+	}
+
+	for _, c := range cases {
+		tc := c
+		t.Run(tc.name, func(t *testing.T) {
+			s := newTestStorage(t)
+
+			if tc.isVaultExist {
+				require.NoError(t, s.Save(newTestVault(tc.vaultName, nil)))
+			}
+
+			err := newTestManager(s).RemoveVault(tc.vaultName)
+			if tc.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+
+			got, err := s.IsVaultExists(tc.name)
+			require.NoError(t, err)
+			require.False(t, got)
 		})
 	}
 }
