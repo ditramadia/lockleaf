@@ -11,17 +11,21 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var connectName string
-var forceDelete bool
+var connect string
+var delete string
+var force bool
 
 var vaultCmd = &cobra.Command{
 	Use:     "vault",
 	Aliases: []string{"v"},
 	Short:   "Manage encrypted vaults",
 	Run: func(cmd *cobra.Command, args []string) {
+
 		// Connect to a vault
-		if connectName != "" {
-			exists, err := globalManager.IsVaultExist(connectName)
+		if connect != "" {
+			vaultName := connect
+
+			exists, err := globalManager.IsVaultExist(vaultName)
 			if err != nil {
 				fmt.Println(ui.Error.Render(err.Error()))
 				os.Exit(1)
@@ -32,14 +36,82 @@ var vaultCmd = &cobra.Command{
 				os.Exit(1)
 			}
 
-			if err := config.SetActiveVault(connectName); err != nil {
+			if err := config.SetActiveVault(vaultName); err != nil {
 				fmt.Println(ui.Error.Render("Failed to connect."))
 				os.Exit(1)
 			}
 
-			successMsg := fmt.Sprintf("Vault '%s' connected.", connectName)
+			successMsg := fmt.Sprintf("Vault '%s' connected.", vaultName)
 			fmt.Println(ui.Success.Render(successMsg))
 			return
+		}
+
+		// Delete a vault
+		if delete != "" {
+			vaultName := delete
+
+			exists, err := globalManager.IsVaultExist(vaultName)
+			if err != nil {
+				fmt.Println(ui.Error.Render(err.Error()))
+				os.Exit(1)
+			}
+			if !exists {
+				fmt.Println(ui.Error.Render("Vault not found."))
+				fmt.Println(ui.Tips.MarginLeft(2).Render("(Use \"leaf vault\" to list vaults)"))
+				os.Exit(1)
+			}
+
+			// Prompt user for confirmation
+			if !force {
+
+				confirm := ""
+				match := "vault/" + vaultName
+
+				promptMsg := fmt.Sprintf("Type '%s' to confirm:", match)
+				prompt := &survey.Input{
+					Message: fmt.Sprint(ui.Normal.Render(promptMsg)),
+				}
+				survey.AskOne(prompt, &confirm,
+					survey.WithStdio(os.Stdin, os.Stderr, os.Stderr),
+					survey.WithIcons(func(icons *survey.IconSet) {
+						icons.Question.Format = "reset"
+						icons.Question.Text = "?"
+					}),
+				)
+
+				if confirm != match {
+					fmt.Println(ui.Error.Render("Confirmation failed."))
+					os.Exit(0)
+				}
+			}
+
+			activeVault := config.GetActiveVault()
+			isDeleteCurrentVault := activeVault == delete
+			if isDeleteCurrentVault {
+				if err := config.SetActiveVault(""); err != nil {
+					fmt.Println(ui.Error.Render(err.Error()))
+					os.Exit(1)
+				}
+			}
+
+			if err := globalManager.RemoveVault(vaultName); err != nil {
+
+				// Rollback config active vault
+				if isDeleteCurrentVault {
+					if err := config.SetActiveVault(activeVault); err != nil {
+						fmt.Println(ui.Error.Render(err.Error()))
+						os.Exit(1)
+					}
+				}
+
+				fmt.Println(ui.Error.Render(err.Error()))
+				os.Exit(1)
+			}
+
+			successMsg := fmt.Sprintf("Vault '%s' removed.", vaultName)
+			fmt.Println(ui.Success.Render(successMsg))
+
+			os.Exit(0)
 		}
 
 		// Initialize a new vault
@@ -97,24 +169,6 @@ var vaultCmd = &cobra.Command{
 	},
 }
 
-// InitCmd represents the 'vault init' command
-var initCmd = &cobra.Command{
-	Use:   "init [vault_name]",
-	Short: "Initialize a new vault",
-	Args:  cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		vaultName := args[0]
-
-		if err := globalManager.CreateVault(vaultName); err != nil {
-			fmt.Println(ui.Error.Render(err.Error()))
-			os.Exit(1)
-		}
-
-		successMsg := fmt.Sprintf("Vault '%s' initialized.", vaultName)
-		fmt.Println(ui.Success.Render(successMsg))
-	},
-}
-
 var renameCmd = &cobra.Command{
 	Use:   "rename",
 	Short: "Rename a vault",
@@ -135,64 +189,11 @@ var renameCmd = &cobra.Command{
 	},
 }
 
-var removeCmd = &cobra.Command{
-	Use:   "rm",
-	Short: "Remove a vault",
-	Args:  cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		vaultName := args[0]
-
-		exists, err := globalManager.IsVaultExist(vaultName)
-		if err != nil {
-			fmt.Println(ui.Error.Render(err.Error()))
-			os.Exit(1)
-		}
-		if !exists {
-			fmt.Println(ui.Error.Render("Vault not found."))
-			fmt.Println(ui.Tips.MarginLeft(2).Render("(Use \"leaf vault ls\" to list vaults)"))
-			os.Exit(1)
-		}
-
-		// Prompt user for confirmation
-		if !forceDelete {
-
-			confirm := ""
-			match := "vault/" + vaultName
-
-			promptMsg := fmt.Sprintf("Type '%s' to confirm:", match)
-			prompt := &survey.Input{
-				Message: fmt.Sprint(ui.Normal.Render(promptMsg)),
-			}
-			survey.AskOne(prompt, &confirm,
-				survey.WithStdio(os.Stdin, os.Stderr, os.Stderr),
-				survey.WithIcons(func(icons *survey.IconSet) {
-					icons.Question.Format = "reset"
-					icons.Question.Text = "?"
-				}),
-			)
-
-			if confirm != match {
-				fmt.Println(ui.Error.Render("Confirmation failed."))
-				os.Exit(0)
-			}
-		}
-
-		if err := globalManager.RemoveVault(vaultName); err != nil {
-			fmt.Println(ui.Error.Render(err.Error()))
-			os.Exit(1)
-		}
-
-		successMsg := fmt.Sprintf("Vault '%s' removed.", vaultName)
-		fmt.Println(ui.Success.Render(successMsg))
-	},
-}
-
 func init() {
-	vaultCmd.Flags().StringVarP(&connectName, "connect", "c", "", "Connect to a specific vault")
-	removeCmd.Flags().BoolVarP(&forceDelete, "force", "f", false, "Skip confirmation prompt")
+	vaultCmd.Flags().StringVarP(&connect, "connect", "c", "", "Connect to a specific vault")
+	vaultCmd.Flags().StringVarP(&delete, "delete", "d", "", "Delete a vault")
+	vaultCmd.Flags().BoolVarP(&force, "force", "f", false, "Skip confirmation prompt")
 
 	rootCmd.AddCommand(vaultCmd)
-	vaultCmd.AddCommand(initCmd)
 	vaultCmd.AddCommand(renameCmd)
-	vaultCmd.AddCommand(removeCmd)
 }
