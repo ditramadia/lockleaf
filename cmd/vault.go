@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"os"
 
+	"charm.land/lipgloss/v2/list"
 	"github.com/AlecAivazis/survey/v2"
+	"github.com/ditramadia/lockleaf/internal/ui"
 	"github.com/spf13/cobra"
 )
 
@@ -25,11 +27,12 @@ var initCmd = &cobra.Command{
 		vaultName := args[0]
 
 		if err := globalManager.CreateVault(vaultName); err != nil {
-			fmt.Printf("%v\n", err)
+			fmt.Println(ui.Error.Render(err.Error()))
 			os.Exit(1)
 		}
 
-		fmt.Printf("Vault '%s' initialized.\n", vaultName)
+		successMsg := fmt.Sprintf("Vault '%s' initialized.", vaultName)
+		fmt.Println(ui.Success.Render(successMsg))
 	},
 }
 
@@ -39,19 +42,29 @@ var listCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		vaults, err := globalManager.ListVaults()
 		if err != nil {
-			fmt.Printf("%v\n", err)
+			fmt.Println(ui.Error.Render(err.Error()))
 			os.Exit(1)
 		}
 
 		if len(vaults) == 0 {
-			fmt.Println("No vaults found. Create one with: pw vault init <name>")
-			return
+			fmt.Println(ui.Normal.Render("No vaults found."))
+			fmt.Println(ui.Tips.MarginLeft(2).Render("(Use \"pw vault init <name>\" to create a vault)"))
+			os.Exit(1)
 		}
 
-		fmt.Println("Available Vaults:")
-		for _, v := range vaults {
-			fmt.Printf("  - %s\n", v)
+		items := make([]any, len(vaults))
+		for i, v := range vaults {
+			items[i] = v
 		}
+
+		l := list.New(items...).
+			Enumerator(func(_ list.Items, i int) string {
+				return ui.BulletStyle.Render("•")
+			}).
+			ItemStyle(ui.Normal)
+
+		fmt.Println(ui.Normal.MarginTop(1).Render("Available Vaults:"))
+		fmt.Println(ui.ListStyle.Render(l.String()))
 	},
 }
 
@@ -64,11 +77,14 @@ var renameCmd = &cobra.Command{
 		newVaultName := args[1]
 
 		if err := globalManager.RenameVault(vaultName, newVaultName); err != nil {
-			fmt.Printf("%v\n", err)
+			fmt.Println(ui.Error.Render(err.Error()))
 			os.Exit(1)
 		}
 
-		fmt.Printf("Vault '%s' renamed to '%s'.\n", vaultName, newVaultName)
+		styledNewName := ui.Info.Bold(true).Render(newVaultName)
+		fmt.Println(ui.Success.Render(
+			fmt.Sprintf("Vault '%s' renamed to '%s'.", vaultName, styledNewName),
+		))
 	},
 }
 
@@ -81,11 +97,12 @@ var removeCmd = &cobra.Command{
 
 		exists, err := globalManager.IsVaultExist(vaultName)
 		if err != nil {
-			fmt.Printf("%v\n", err)
+			fmt.Println(ui.Error.Render(err.Error()))
 			os.Exit(1)
 		}
 		if !exists {
-			fmt.Println("Vault not found.")
+			fmt.Println(ui.Error.Render("Vault not found."))
+			fmt.Println(ui.Tips.MarginLeft(2).Render("(Use \"pw vault ls\" to list vaults)"))
 			os.Exit(1)
 		}
 
@@ -95,24 +112,31 @@ var removeCmd = &cobra.Command{
 			confirm := ""
 			match := "vault/" + vaultName
 
+			promptMsg := fmt.Sprintf("Type '%s' to confirm:", match)
 			prompt := &survey.Input{
-				Message: fmt.Sprintf("Type '%s' to confirm deletion:", match),
+				Message: fmt.Sprint(ui.Normal.Render(promptMsg)),
 			}
-			survey.AskOne(prompt, &confirm)
+			survey.AskOne(prompt, &confirm,
+				survey.WithStdio(os.Stdin, os.Stderr, os.Stderr),
+				survey.WithIcons(func(icons *survey.IconSet) {
+					icons.Question.Format = "reset"
+					icons.Question.Text = "?"
+				}),
+			)
 
 			if confirm != match {
-				fmt.Println("Confirmation failed.")
-				fmt.Println("Aborted.")
+				fmt.Println(ui.Error.Render("Confirmation failed."))
 				os.Exit(0)
 			}
 		}
 
 		if err := globalManager.RemoveVault(vaultName); err != nil {
-			fmt.Printf("%v\n", err)
+			fmt.Println(ui.Error.Render(err.Error()))
 			os.Exit(1)
 		}
 
-		fmt.Printf("Vault '%s' removed.\n", vaultName)
+		successMsg := fmt.Sprintf("Vault '%s' removed.", vaultName)
+		fmt.Println(ui.Success.Render(successMsg))
 	},
 }
 
