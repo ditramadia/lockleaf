@@ -19,8 +19,7 @@ type Manager struct {
 	Storage *vault.Storage
 }
 
-// NewManager creates a new manager instance
-func NewManager(storage *vault.Storage) *Manager {
+func New(storage *vault.Storage) *Manager {
 	return &Manager{
 		Storage: storage,
 	}

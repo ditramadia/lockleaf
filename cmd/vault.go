@@ -1,13 +1,6 @@
 package cmd
 
 import (
-	"fmt"
-	"os"
-
-	"charm.land/lipgloss/v2/list"
-	"github.com/AlecAivazis/survey/v2"
-	"github.com/ditramadia/lockleaf/internal/config"
-	"github.com/ditramadia/lockleaf/internal/ui"
 	"github.com/spf13/cobra"
 )
 
@@ -25,94 +18,13 @@ var vaultCmd = &cobra.Command{
 		// Connect to a vault
 		if connect != "" {
 			vaultName := connect
-
-			exists, err := globalManager.IsVaultExist(vaultName)
-			if err != nil {
-				fmt.Println(ui.Error.Render(err.Error()))
-				os.Exit(1)
-			}
-			if !exists {
-				fmt.Println(ui.Error.Render("Vault not found."))
-				fmt.Println(ui.Tips.MarginLeft(2).Render("(Use \"leaf vault\" to list vaults)"))
-				os.Exit(1)
-			}
-
-			if err := config.SetActiveVault(vaultName); err != nil {
-				fmt.Println(ui.Error.Render("Failed to connect."))
-				os.Exit(1)
-			}
-
-			successMsg := fmt.Sprintf("Vault '%s' connected.", vaultName)
-			fmt.Println(ui.Success.Render(successMsg))
-			return
+			h.Connect(vaultName)
 		}
 
 		// Delete a vault
 		if delete != "" {
 			vaultName := delete
-
-			exists, err := globalManager.IsVaultExist(vaultName)
-			if err != nil {
-				fmt.Println(ui.Error.Render(err.Error()))
-				os.Exit(1)
-			}
-			if !exists {
-				fmt.Println(ui.Error.Render("Vault not found."))
-				fmt.Println(ui.Tips.MarginLeft(2).Render("(Use \"leaf vault\" to list vaults)"))
-				os.Exit(1)
-			}
-
-			// Prompt user for confirmation
-			if !force {
-
-				confirm := ""
-				match := "vault/" + vaultName
-
-				promptMsg := fmt.Sprintf("Type '%s' to confirm:", match)
-				prompt := &survey.Input{
-					Message: fmt.Sprint(ui.Normal.Render(promptMsg)),
-				}
-				survey.AskOne(prompt, &confirm,
-					survey.WithStdio(os.Stdin, os.Stderr, os.Stderr),
-					survey.WithIcons(func(icons *survey.IconSet) {
-						icons.Question.Format = "reset"
-						icons.Question.Text = "?"
-					}),
-				)
-
-				if confirm != match {
-					fmt.Println(ui.Error.Render("Confirmation failed."))
-					os.Exit(0)
-				}
-			}
-
-			activeVault := config.GetActiveVault()
-			isActive := activeVault == delete
-			if isActive {
-				if err := config.SetActiveVault(""); err != nil {
-					fmt.Println(ui.Error.Render(err.Error()))
-					os.Exit(1)
-				}
-			}
-
-			if err := globalManager.RemoveVault(vaultName); err != nil {
-
-				// Rollback config active vault
-				if isActive {
-					if err := config.SetActiveVault(activeVault); err != nil {
-						fmt.Println(ui.Error.Render(err.Error()))
-						os.Exit(1)
-					}
-				}
-
-				fmt.Println(ui.Error.Render(err.Error()))
-				os.Exit(1)
-			}
-
-			successMsg := fmt.Sprintf("Vault '%s' removed.", vaultName)
-			fmt.Println(ui.Success.Render(successMsg))
-
-			os.Exit(0)
+			h.DeleteVault(vaultName, force)
 		}
 
 		// Rename a vault
@@ -120,83 +32,22 @@ var vaultCmd = &cobra.Command{
 			newVaultName := modify
 			var vaultName string
 
+			// Rename another vault
 			if len(args) == 1 {
-				// Rename another vault
 				vaultName = args[0]
-			} else {
-				// Rename current vault
-				vaultName = config.GetActiveVault()
-				if err := config.SetActiveVault(newVaultName); err != nil {
-					fmt.Println(ui.Error.Render(err.Error()))
-					os.Exit(1)
-				}
 			}
 
-			if err := globalManager.RenameVault(vaultName, newVaultName); err != nil {
-				fmt.Println(ui.Error.Render(err.Error()))
-				os.Exit(1)
-			}
-
-			styledNewName := ui.Info.Bold(true).Render(newVaultName)
-			fmt.Println(ui.Success.Render(
-				fmt.Sprintf("Vault '%s' renamed to '%s'.", vaultName, styledNewName),
-			))
-
-			os.Exit(0)
+			h.RenameVault(vaultName, newVaultName)
 		}
 
 		// Initialize a new vault
 		if len(args) == 1 {
 			vaultName := args[0]
-
-			if err := globalManager.CreateVault(vaultName); err != nil {
-				fmt.Println(ui.Error.Render(err.Error()))
-				os.Exit(1)
-			}
-
-			successMsg := fmt.Sprintf("Vault '%s' initialized.", vaultName)
-			fmt.Println(ui.Success.Render(successMsg))
-
-			os.Exit(0)
+			h.InitVault(vaultName)
 		}
 
 		// List all available vaults
-		{
-			vaults, err := globalManager.ListVaults()
-			if err != nil {
-				fmt.Println(ui.Error.Render(err.Error()))
-				os.Exit(1)
-			}
-
-			if len(vaults) == 0 {
-				fmt.Println(ui.Normal.Render("No vaults found."))
-				fmt.Println(ui.Tips.MarginLeft(2).Render("(Use \"leaf vault init <name>\" to create a vault)"))
-				os.Exit(1)
-			}
-
-			activeVault := config.GetActiveVault()
-			items := make([]any, len(vaults))
-			for i, v := range vaults {
-				// 2. Check if this is the active one
-				if v == activeVault {
-					// Style ONLY this item
-					items[i] = ui.Info.Bold(true).Render(v + " (active)")
-				} else {
-					// Keep the rest normal
-					items[i] = ui.Normal.Render(v)
-				}
-			}
-
-			l := list.New(items...).
-				Enumerator(func(_ list.Items, i int) string {
-					return ui.BulletStyle.Render("•")
-				})
-
-			fmt.Println(ui.Normal.MarginTop(1).Render("Available Vaults:"))
-			fmt.Println(ui.ListStyle.Render(l.String()))
-
-			os.Exit(0)
-		}
+		h.ListVaults()
 	},
 }
 

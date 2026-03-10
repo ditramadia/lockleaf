@@ -1,0 +1,177 @@
+package handler
+
+import (
+	"fmt"
+	"os"
+
+	"charm.land/lipgloss/v2/list"
+	"github.com/AlecAivazis/survey/v2"
+	"github.com/ditramadia/lockleaf/internal/config"
+	"github.com/ditramadia/lockleaf/internal/manager"
+	"github.com/ditramadia/lockleaf/internal/ui"
+)
+
+type Handler struct {
+	m *manager.Manager
+}
+
+func New(manager *manager.Manager) *Handler {
+	return &Handler{
+		m: manager,
+	}
+}
+
+func (h *Handler) InitVault(vaultName string) {
+	if err := h.m.CreateVault(vaultName); err != nil {
+		fmt.Println(ui.Error.Render(err.Error()))
+		os.Exit(1)
+	}
+
+	successMsg := fmt.Sprintf("Vault '%s' initialized.", vaultName)
+	fmt.Println(ui.Success.Render(successMsg))
+
+	os.Exit(0)
+}
+
+func (h *Handler) Connect(vaultName string) {
+	h.validateVaultExists(vaultName)
+
+	if err := config.SetActiveVault(vaultName); err != nil {
+		fmt.Println(ui.Error.Render("Failed to connect."))
+		os.Exit(1)
+	}
+
+	successMsg := fmt.Sprintf("Vault '%s' connected.", vaultName)
+	fmt.Println(ui.Success.Render(successMsg))
+
+	os.Exit(0)
+}
+
+func (h *Handler) ListVaults() {
+	vaults, err := h.m.ListVaults()
+	if err != nil {
+		fmt.Println(ui.Error.Render(err.Error()))
+		os.Exit(1)
+	}
+
+	if len(vaults) == 0 {
+		fmt.Println(ui.Normal.Render("No vaults found."))
+		fmt.Println(ui.Tips.MarginLeft(2).Render("(Use \"leaf vault init <name>\" to create a vault)"))
+		os.Exit(0)
+	}
+
+	activeVault := config.GetActiveVault()
+	items := make([]any, len(vaults))
+	for i, v := range vaults {
+		if v == activeVault {
+			items[i] = ui.Info.Bold(true).Render(v + " (active)")
+		} else {
+			items[i] = ui.Normal.Render(v)
+		}
+	}
+
+	l := list.New(items...).
+		Enumerator(func(_ list.Items, i int) string {
+			return ui.BulletStyle.Render("•")
+		})
+
+	fmt.Println(ui.Normal.MarginTop(1).Render("Available Vaults:"))
+	fmt.Println(ui.ListStyle.Render(l.String()))
+
+	os.Exit(0)
+}
+
+func (h *Handler) RenameVault(oldName, newName string) {
+
+	if oldName == "" {
+		// Rename current vault
+		oldName = config.GetActiveVault()
+		if err := config.SetActiveVault(newName); err != nil {
+			fmt.Println(ui.Error.Render(err.Error()))
+			os.Exit(1)
+		}
+	}
+
+	if err := h.m.RenameVault(oldName, newName); err != nil {
+		fmt.Println(ui.Error.Render(err.Error()))
+		os.Exit(1)
+	}
+
+	styledNewName := ui.Info.Bold(true).Render(newName)
+	fmt.Println(ui.Success.Render(
+		fmt.Sprintf("Vault '%s' renamed to '%s'.", oldName, styledNewName),
+	))
+
+	os.Exit(0)
+}
+
+func (h *Handler) DeleteVault(vaultName string, force bool) {
+	h.validateVaultExists(vaultName)
+
+	// Prompt user for confirmation
+	if !force {
+
+		confirm := ""
+		match := "vault/" + vaultName
+
+		promptMsg := fmt.Sprintf("Type '%s' to confirm:", match)
+		prompt := &survey.Input{
+			Message: fmt.Sprint(ui.Normal.Render(promptMsg)),
+		}
+		survey.AskOne(prompt, &confirm,
+			survey.WithStdio(os.Stdin, os.Stderr, os.Stderr),
+			survey.WithIcons(func(icons *survey.IconSet) {
+				icons.Question.Format = "reset"
+				icons.Question.Text = "?"
+			}),
+		)
+
+		if confirm != match {
+			fmt.Println(ui.Error.Render("Confirmation failed."))
+			os.Exit(0)
+		}
+	}
+
+	activeVault := config.GetActiveVault()
+	isActive := activeVault == vaultName
+	if isActive {
+		if err := config.SetActiveVault(""); err != nil {
+			fmt.Println(ui.Error.Render(err.Error()))
+			os.Exit(1)
+		}
+	}
+
+	if err := h.m.RemoveVault(vaultName); err != nil {
+
+		// Rollback config active vault
+		if isActive {
+			if err := config.SetActiveVault(activeVault); err != nil {
+				fmt.Println(ui.Error.Render(err.Error()))
+				os.Exit(1)
+			}
+		}
+
+		fmt.Println(ui.Error.Render(err.Error()))
+		os.Exit(1)
+	}
+
+	successMsg := fmt.Sprintf("Vault '%s' removed.", vaultName)
+	fmt.Println(ui.Success.Render(successMsg))
+
+	os.Exit(0)
+}
+
+// Internal helpers
+
+func (h *Handler) validateVaultExists(vaultName string) {
+	exists, err := h.m.IsVaultExist(vaultName)
+	if err != nil {
+		fmt.Println(ui.Error.Render(err.Error()))
+		os.Exit(1)
+	}
+	if !exists {
+		fmt.Println(ui.Error.Render("Vault not found."))
+		fmt.Println(ui.Tips.MarginLeft(2).Render("(Use \"leaf vault\" to list vaults)"))
+		os.Exit(1)
+	}
+}

@@ -14,7 +14,7 @@ type Storage struct {
 }
 
 // NewStorage creates a new storage instance with the given path
-func NewStorage(dataDir string) *Storage {
+func New(dataDir string) *Storage {
 	return &Storage{DataDir: dataDir}
 }
 

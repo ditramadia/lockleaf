@@ -176,11 +176,11 @@ func TestIsVaultExist(t *testing.T) {
 // Internal helpers
 
 func newTestStorage(t *testing.T) *vault.Storage {
-	return vault.NewStorage(t.TempDir())
+	return vault.New(t.TempDir())
 }
 
 func newTestManager(s *vault.Storage) *Manager {
-	return NewManager(s)
+	return New(s)
 }
 
 func newTestVault(vaultName string, credentials map[string]vault.Credential) *vault.Vault {

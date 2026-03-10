@@ -166,7 +166,7 @@ func TestRemove(t *testing.T) {
 
 func newTestStorage(t *testing.T) *Storage {
 	tmpDir := t.TempDir()
-	storage := NewStorage(tmpDir)
+	storage := New(tmpDir)
 
 	return storage
 }

@@ -5,11 +5,13 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/ditramadia/lockleaf/internal/handler"
 	"github.com/ditramadia/lockleaf/internal/manager"
 	"github.com/ditramadia/lockleaf/internal/vault"
 	"github.com/spf13/cobra"
 )
 
+var h *handler.Handler
 var globalManager *manager.Manager
 var customPath string
 
@@ -53,10 +55,13 @@ func Setup() error {
 	}
 
 	// Setup storage
-	storage := vault.NewStorage(dataDir)
+	storage := vault.New(dataDir)
 
 	// Setup manager
-	globalManager = manager.NewManager(storage)
+	globalManager = manager.New(storage)
+
+	// Setup handlers
+	h = handler.New(globalManager)
 
 	return nil
 }
