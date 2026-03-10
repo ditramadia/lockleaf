@@ -5,15 +5,15 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/ditramadia/lockleaf/internal/config"
 	"github.com/ditramadia/lockleaf/internal/handler"
 	"github.com/ditramadia/lockleaf/internal/manager"
 	"github.com/ditramadia/lockleaf/internal/vault"
 	"github.com/spf13/cobra"
 )
 
-var h *handler.Handler
-var globalManager *manager.Manager
 var customPath string
+var h *handler.Handler
 
 var rootCmd = &cobra.Command{
 	Use:        "leaf",
@@ -37,7 +37,7 @@ func Execute() error {
 }
 
 func Setup() error {
-	// Config
+	// Determine storage directory
 	var dataDir string
 	if customPath != "" {
 		dataDir = customPath
@@ -54,14 +54,20 @@ func Setup() error {
 		return fmt.Errorf("error creating storage directory: %v", err)
 	}
 
+	// Initialize config
+	cfg, err := config.Init()
+	if err != nil {
+		return fmt.Errorf("error initializing config: %v", err)
+	}
+
 	// Setup storage
 	storage := vault.New(dataDir)
 
 	// Setup manager
-	globalManager = manager.New(storage)
+	m := manager.New(storage)
 
 	// Setup handlers
-	h = handler.New(globalManager)
+	h = handler.New(cfg, m)
 
 	return nil
 }

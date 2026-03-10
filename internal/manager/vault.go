@@ -6,7 +6,6 @@ import (
 	"github.com/ditramadia/lockleaf/internal/vault"
 )
 
-// CreateVault creates a new vault
 func (m *Manager) CreateVault(name string) error {
 	// Check if vault already exists
 	exists, err := m.Storage.IsVaultExist(name)
@@ -28,12 +27,10 @@ func (m *Manager) CreateVault(name string) error {
 	return nil
 }
 
-// ListVaults returns all created vaults
 func (m *Manager) ListVaults() ([]string, error) {
 	return m.Storage.List()
 }
 
-// RenameVault renames a vault
 func (m *Manager) RenameVault(name, newName string) error {
 	// Check if vault exists
 	exists, err := m.Storage.IsVaultExist(name)

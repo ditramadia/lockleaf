@@ -40,6 +40,15 @@ func (s *Storage) IsVaultExist(vaultName string) (bool, error) {
 	return true, nil
 }
 
+func (s *Storage) IsCredentialExist(vault *Vault, credentialName string) (bool, error) {
+	for _, c := range vault.Credentials {
+		if c.Name == credentialName {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
 // Save writes the vault to disk
 func (s *Storage) Save(v *Vault) error {
 	path := s.GetPath(v.Name)

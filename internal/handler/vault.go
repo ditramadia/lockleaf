@@ -12,12 +12,14 @@ import (
 )
 
 type Handler struct {
-	m *manager.Manager
+	cfg *config.Config
+	m   *manager.Manager
 }
 
-func New(manager *manager.Manager) *Handler {
+func New(cfg *config.Config, manager *manager.Manager) *Handler {
 	return &Handler{
-		m: manager,
+		cfg: cfg,
+		m:   manager,
 	}
 }
 
@@ -36,7 +38,7 @@ func (h *Handler) InitVault(vaultName string) {
 func (h *Handler) Connect(vaultName string) {
 	h.validateVaultExists(vaultName)
 
-	if err := config.SetActiveVault(vaultName); err != nil {
+	if err := h.cfg.SetActiveVault(vaultName); err != nil {
 		fmt.Println(ui.Error.Render("Failed to connect."))
 		os.Exit(1)
 	}
@@ -60,7 +62,12 @@ func (h *Handler) ListVaults() {
 		os.Exit(0)
 	}
 
-	activeVault := config.GetActiveVault()
+	activeVault, err := h.cfg.GetActiveVault()
+	if err != nil {
+		fmt.Println(ui.Error.Render(err.Error()))
+		os.Exit(1)
+	}
+
 	items := make([]any, len(vaults))
 	for i, v := range vaults {
 		if v == activeVault {
@@ -82,14 +89,20 @@ func (h *Handler) ListVaults() {
 }
 
 func (h *Handler) RenameVault(oldName, newName string) {
-
 	if oldName == "" {
 		// Rename current vault
-		oldName = config.GetActiveVault()
-		if err := config.SetActiveVault(newName); err != nil {
+		activeVaultName, err := h.cfg.GetActiveVault()
+		if err != nil {
 			fmt.Println(ui.Error.Render(err.Error()))
 			os.Exit(1)
 		}
+
+		if err := h.cfg.SetActiveVault(newName); err != nil {
+			fmt.Println(ui.Error.Render(err.Error()))
+			os.Exit(1)
+		}
+
+		oldName = activeVaultName
 	}
 
 	if err := h.m.RenameVault(oldName, newName); err != nil {
@@ -132,10 +145,15 @@ func (h *Handler) DeleteVault(vaultName string, force bool) {
 		}
 	}
 
-	activeVault := config.GetActiveVault()
+	activeVault, err := h.cfg.GetActiveVault()
+	if err != nil {
+		fmt.Println(ui.Error.Render(err.Error()))
+		os.Exit(1)
+	}
+
 	isActive := activeVault == vaultName
 	if isActive {
-		if err := config.SetActiveVault(""); err != nil {
+		if err := h.cfg.SetActiveVault(""); err != nil {
 			fmt.Println(ui.Error.Render(err.Error()))
 			os.Exit(1)
 		}
@@ -145,7 +163,7 @@ func (h *Handler) DeleteVault(vaultName string, force bool) {
 
 		// Rollback config active vault
 		if isActive {
-			if err := config.SetActiveVault(activeVault); err != nil {
+			if err := h.cfg.SetActiveVault(activeVault); err != nil {
 				fmt.Println(ui.Error.Render(err.Error()))
 				os.Exit(1)
 			}
