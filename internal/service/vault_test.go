@@ -76,9 +76,9 @@ func TestRenameVaults(t *testing.T) {
 		isNewNameAvailable bool
 		wantErr            bool
 	}{
-		{"rename vault successful", "metaurus", "titus", newTestCredentials(), true, true, false},
-		{"rename missing vault", "guilliman", "titus", newTestCredentials(), false, true, true},
-		{"new name unavailable", "metaurus", "titus", newTestCredentials(), true, false, true},
+		{"rename vault successful", "metaurus", "titus", newTestCredentials("chainsword", newTestFields()), true, true, false},
+		{"rename missing vault", "guilliman", "titus", newTestCredentials("chainsword", newTestFields()), false, true, true},
+		{"new vault name already exists", "metaurus", "titus", newTestCredentials("chainsword", newTestFields()), true, false, true},
 	}
 
 	for _, c := range cases {

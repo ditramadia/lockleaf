@@ -83,3 +83,63 @@ func TestListCredentials(t *testing.T) {
 		})
 	}
 }
+
+func TestRenameCredential(t *testing.T) {
+	cases := []struct {
+		name               string
+		vaultName          string
+		oldCredentialName  string
+		newCredentialName  string
+		fields             map[string]vault.Field
+		isVaultExist       bool
+		isCredentialExist  bool
+		isNewNameAvailable bool
+		wantErr            bool
+	}{
+		{"rename credential successful", "titus", "bolt-pistol", "chainsword", newTestFields(), true, true, true, false},
+		{"vault does not exist", "titus", "bolt-pistol", "chainsword", newTestFields(), false, true, true, true},
+		{"rename missing credential", "guilliman", "bolt-pistol", "chainsword", newTestFields(), true, false, true, true},
+		{"new credential name already exists", "titus", "bolt-pistol", "chainsword", newTestFields(), true, true, false, true},
+	}
+
+	for _, c := range cases {
+		tc := c
+		t.Run(tc.name, func(t *testing.T) {
+			s := newTestStorage(t)
+
+			if tc.isVaultExist {
+				v := newTestVault(tc.vaultName, nil)
+
+				if tc.isCredentialExist {
+					v.Credentials[tc.oldCredentialName] = vault.Credential{
+						Name:   tc.oldCredentialName,
+						Fields: tc.fields,
+					}
+				}
+
+				if !tc.isNewNameAvailable {
+					v.Credentials[tc.newCredentialName] = vault.Credential{
+						Name:   tc.newCredentialName,
+						Fields: tc.fields,
+					}
+				}
+
+				require.NoError(t, s.Save(v))
+			}
+
+			err := newTestService(s).RenameCredential(tc.vaultName, tc.oldCredentialName, tc.newCredentialName)
+			if tc.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+
+			loadedV, err := s.Load(tc.vaultName)
+			require.NoError(t, err)
+
+			got := loadedV.Credentials[tc.newCredentialName]
+			require.Equal(t, tc.newCredentialName, got.Name)
+			require.Equal(t, tc.fields, got.Fields)
+		})
+	}
+}

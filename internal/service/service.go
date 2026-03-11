@@ -46,16 +46,31 @@ func newTestVault(vaultName string, credentials map[string]vault.Credential) *va
 	return v
 }
 
-func newTestCredentials() map[string]vault.Credential {
-	c := &vault.Credential{
-		Name: "Github",
-		Fields: map[string]vault.Field{
-			"username": {Label: "username", Value: "gopher", IsSecret: false},
-			"password": {Label: "password", Value: "s3cr3t", IsSecret: true},
-		},
+func newTestCredentials(name string, fields map[string]vault.Field) map[string]vault.Credential {
+	c := vault.Credential{
+		Name:   name,
+		Fields: fields,
 	}
 
 	return map[string]vault.Credential{
-		c.Name: *c,
+		c.Name: c,
+	}
+}
+
+func newTestFields() map[string]vault.Field {
+	f1 := vault.Field{
+		Label:    "username",
+		Value:    "gopher",
+		IsSecret: false,
+	}
+	f2 := vault.Field{
+		Label:    "password",
+		Value:    "s3cr3t",
+		IsSecret: true,
+	}
+
+	return map[string]vault.Field{
+		f1.Label: f1,
+		f2.Label: f2,
 	}
 }
