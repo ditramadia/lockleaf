@@ -6,22 +6,8 @@ import (
 
 	"charm.land/lipgloss/v2/list"
 	"github.com/AlecAivazis/survey/v2"
-	"github.com/ditramadia/lockleaf/internal/config"
-	"github.com/ditramadia/lockleaf/internal/manager"
 	"github.com/ditramadia/lockleaf/internal/ui"
 )
-
-type Handler struct {
-	cfg *config.Config
-	m   *manager.Manager
-}
-
-func New(cfg *config.Config, manager *manager.Manager) *Handler {
-	return &Handler{
-		cfg: cfg,
-		m:   manager,
-	}
-}
 
 func (h *Handler) InitVault(vaultName string) {
 	if err := h.m.CreateVault(vaultName); err != nil {
@@ -62,9 +48,13 @@ func (h *Handler) ListVaults() {
 		os.Exit(0)
 	}
 
-	activeVault, err := h.cfg.GetActiveVault()
+	activeVault, ok, err := h.cfg.GetActiveVault()
 	if err != nil {
 		fmt.Println(ui.Error.Render(err.Error()))
+		os.Exit(1)
+	}
+	if !ok {
+		fmt.Println(ui.Error.Render("No active vault. Please connect to a vault first."))
 		os.Exit(1)
 	}
 
@@ -91,9 +81,13 @@ func (h *Handler) ListVaults() {
 func (h *Handler) RenameVault(oldName, newName string) {
 	if oldName == "" {
 		// Rename current vault
-		activeVaultName, err := h.cfg.GetActiveVault()
+		activeVaultName, ok, err := h.cfg.GetActiveVault()
 		if err != nil {
 			fmt.Println(ui.Error.Render(err.Error()))
+			os.Exit(1)
+		}
+		if !ok {
+			fmt.Println(ui.Error.Render("No active vault. Please connect to a vault first."))
 			os.Exit(1)
 		}
 
@@ -145,9 +139,13 @@ func (h *Handler) DeleteVault(vaultName string, force bool) {
 		}
 	}
 
-	activeVault, err := h.cfg.GetActiveVault()
+	activeVault, ok, err := h.cfg.GetActiveVault()
 	if err != nil {
 		fmt.Println(ui.Error.Render(err.Error()))
+		os.Exit(1)
+	}
+	if !ok {
+		fmt.Println(ui.Error.Render("No active vault. Please connect to a vault first."))
 		os.Exit(1)
 	}
 

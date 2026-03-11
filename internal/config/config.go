@@ -77,6 +77,9 @@ func (c *Config) SetActiveVault(name string) error {
 	return os.WriteFile(c.path, data, 0644)
 }
 
-func (c *Config) GetActiveVault() (string, error) {
-	return c.ActiveVault, nil
+func (c *Config) GetActiveVault() (string, bool, error) {
+	activeVault := c.ActiveVault
+	ok := activeVault != ""
+
+	return c.ActiveVault, ok, nil
 }
