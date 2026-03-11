@@ -3,12 +3,20 @@ package cmd
 import "github.com/spf13/cobra"
 
 var modifyCredential string
+var deleteCredential string
+var forceCredential bool
 
 var credCmd = &cobra.Command{
 	Use:     "cred",
 	Aliases: []string{"c"},
 	Short:   "Manage credentials within the active vault",
 	Run: func(cmd *cobra.Command, args []string) {
+
+		// Delete a credential
+		if deleteCredential != "" {
+			credentialName := deleteCredential
+			h.DeleteCredential(credentialName, forceCredential)
+		}
 
 		// Rename a credential
 		if modifyCredential != "" {
@@ -36,6 +44,8 @@ var credCmd = &cobra.Command{
 
 func init() {
 	credCmd.Flags().StringVarP(&modifyCredential, "modify", "m", "", "Rename a credential")
+	credCmd.Flags().StringVarP(&deleteCredential, "delete", "d", "", "Delete a credential")
+	credCmd.Flags().BoolVarP(&forceCredential, "force", "f", false, "Skip confirmation prompt")
 
 	rootCmd.AddCommand(credCmd)
 }
