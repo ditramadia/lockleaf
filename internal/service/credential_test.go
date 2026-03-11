@@ -143,3 +143,52 @@ func TestRenameCredential(t *testing.T) {
 		})
 	}
 }
+
+func TestRemoveCredential(t *testing.T) {
+	cases := []struct {
+		name              string
+		vaultName         string
+		credentialName    string
+		isVaultExist      bool
+		isCredentialExist bool
+		wantErr           bool
+	}{
+		{"remove credential successful", "titus", "chainsword", true, true, false},
+		{"vault does not exist", "titus", "chainsword", false, false, true},
+		{"remove missing credential", "titus", "chainsword", true, false, true},
+	}
+
+	for _, c := range cases {
+		tc := c
+		t.Run(tc.name, func(t *testing.T) {
+			s := newTestStorage(t)
+
+			if tc.isVaultExist {
+				v := newTestVault(tc.vaultName, nil)
+
+				if tc.isCredentialExist {
+					v.Credentials[tc.credentialName] = vault.Credential{
+						Name:   tc.credentialName,
+						Fields: nil,
+					}
+				}
+
+				require.NoError(t, s.Save(v))
+			}
+
+			err := newTestService(s).RemoveCredential(tc.vaultName, tc.credentialName)
+			if tc.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+
+			loadedV, err := s.Load(tc.vaultName)
+			require.NoError(t, err)
+
+			got, err := s.IsCredentialExist(loadedV, tc.credentialName)
+			require.NoError(t, err)
+			require.False(t, got)
+		})
+	}
+}

@@ -87,3 +87,19 @@ func (s *Service) IsVaultExist(name string) (bool, error) {
 
 	return exists, nil
 }
+
+func (s *Service) IsCredentialExist(vault string, name string) (bool, error) {
+	// Load vault
+	v, err := s.Storage.Load(vault)
+	if err != nil {
+		return false, fmt.Errorf("Error loading vault: %w", err)
+	}
+
+	// Check if credential exists
+	exists, err := s.Storage.IsCredentialExist(v, name)
+	if err != nil {
+		return false, fmt.Errorf("Error checking credential existance: %w", err)
+	}
+
+	return exists, nil
+}
