@@ -43,18 +43,14 @@ func (h *Handler) ListVaults() {
 	}
 
 	if len(vaults) == 0 {
-		fmt.Println(ui.Normal.Render("No vaults found."))
-		fmt.Println(ui.Tips.MarginLeft(2).Render("(Use \"leaf vault init <name>\" to create a vault)"))
+		fmt.Println(ui.Normal.MarginTop(1).Render("No vaults found."))
+		fmt.Println(ui.Tips.MarginBottom(1).MarginLeft(2).Render("(Use \"leaf vault <name>\" to create a vault)"))
 		os.Exit(0)
 	}
 
-	activeVault, ok, err := h.cfg.GetActiveVault()
+	activeVault, _, err := h.cfg.GetActiveVault()
 	if err != nil {
 		fmt.Println(ui.Error.Render(err.Error()))
-		os.Exit(1)
-	}
-	if !ok {
-		fmt.Println(ui.Error.Render("No active vault. Please connect to a vault first."))
 		os.Exit(1)
 	}
 
@@ -72,7 +68,7 @@ func (h *Handler) ListVaults() {
 			return ui.BulletStyle.Render("•")
 		})
 
-	fmt.Println(ui.Normal.MarginTop(1).Render("Available Vaults:"))
+	fmt.Println(ui.Normal.MarginTop(1).Render("Vaults:"))
 	fmt.Println(ui.ListStyle.Render(l.String()))
 
 	os.Exit(0)
