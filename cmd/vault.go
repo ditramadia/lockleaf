@@ -5,8 +5,8 @@ import (
 )
 
 var connect string
+var modifyVault string
 var delete string
-var modify string
 var force bool
 
 var vaultCmd = &cobra.Command{
@@ -28,8 +28,8 @@ var vaultCmd = &cobra.Command{
 		}
 
 		// Rename a vault
-		if modify != "" {
-			newVaultName := modify
+		if modifyVault != "" {
+			newVaultName := modifyVault
 			var vaultName string
 
 			// Rename another vault
@@ -54,7 +54,7 @@ var vaultCmd = &cobra.Command{
 func init() {
 	vaultCmd.Flags().StringVarP(&connect, "connect", "c", "", "Connect to a specific vault")
 	vaultCmd.Flags().StringVarP(&delete, "delete", "d", "", "Delete a vault")
-	vaultCmd.Flags().StringVarP(&modify, "modify", "m", "", "Rename a vault")
+	vaultCmd.Flags().StringVarP(&modifyVault, "modify", "m", "", "Rename a vault")
 	vaultCmd.Flags().BoolVarP(&force, "force", "f", false, "Skip confirmation prompt")
 
 	rootCmd.AddCommand(vaultCmd)

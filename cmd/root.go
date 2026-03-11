@@ -37,6 +37,7 @@ func Execute() error {
 }
 
 func Setup() error {
+
 	// Determine storage directory
 	var dataDir string
 	if customPath != "" {
