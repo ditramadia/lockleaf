@@ -97,5 +97,40 @@ func (s *Service) RenameCredential(vaultName, name, newName string) error {
 	}
 
 	return nil
+}
 
+func (s *Service) RemoveCredential(vaultName, name string) error {
+	// Check if vault exists
+	isVaultExist, err := s.Storage.IsVaultExist(vaultName)
+	if err != nil {
+		return fmt.Errorf("Error checking vault existance: %w", err)
+	}
+	if !isVaultExist {
+		return fmt.Errorf("Vault '%s' does not exist", vaultName)
+	}
+
+	// Load the vault
+	v, err := s.Storage.Load(vaultName)
+	if err != nil {
+		return fmt.Errorf("Error loading vault: %w", err)
+	}
+
+	// Check if credential exists
+	isCredentialExist, err := s.Storage.IsCredentialExist(v, name)
+	if err != nil {
+		return fmt.Errorf("Error checking credential existance: %w", err)
+	}
+	if !isCredentialExist {
+		return fmt.Errorf("Credential '%s' does not exist", name)
+	}
+
+	// Remove the credential
+	delete(v.Credentials, name)
+
+	// Save the updated vault
+	if err := s.Storage.Save(v); err != nil {
+		return fmt.Errorf("Error saving vault: %w", err)
+	}
+
+	return nil
 }
