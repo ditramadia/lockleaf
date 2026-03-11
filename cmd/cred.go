@@ -16,6 +16,7 @@ var credCmd = &cobra.Command{
 		if deleteCredential != "" {
 			credentialName := deleteCredential
 			h.DeleteCredential(credentialName, forceCredential)
+			return
 		}
 
 		// Rename a credential
@@ -28,17 +29,18 @@ var credCmd = &cobra.Command{
 
 			newCredentialName := modifyCredential
 			h.RenameCredential(oldCredentialName, newCredentialName)
+			return
 		}
 
 		// Add a new credential
 		if len(args) == 1 {
 			credentialName := args[0]
 			h.AddCredential(credentialName)
+			return
 		}
 
 		// List all credentials in the active vault
 		h.ListCredentials()
-
 	},
 }
 

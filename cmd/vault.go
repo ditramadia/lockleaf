@@ -19,12 +19,14 @@ var vaultCmd = &cobra.Command{
 		if connect != "" {
 			vaultName := connect
 			h.Connect(vaultName)
+			return
 		}
 
 		// Delete a vault
 		if deleteVault != "" {
 			vaultName := deleteVault
 			h.DeleteVault(vaultName, forceVault)
+			return
 		}
 
 		// Rename a vault
@@ -38,12 +40,14 @@ var vaultCmd = &cobra.Command{
 			}
 
 			h.RenameVault(vaultName, newVaultName)
+			return
 		}
 
 		// Initialize a new vault
 		if len(args) == 1 {
 			vaultName := args[0]
 			h.InitVault(vaultName)
+			return
 		}
 
 		// List all available vaults
