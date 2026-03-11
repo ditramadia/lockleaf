@@ -14,6 +14,9 @@ var credCmd = &cobra.Command{
 			h.AddCredential(credentialName)
 		}
 
+		// List all credentials in the active vault
+		h.ListCredentials()
+
 	},
 }
 
