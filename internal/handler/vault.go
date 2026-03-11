@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"charm.land/lipgloss/v2/list"
-	"github.com/AlecAivazis/survey/v2"
 	"github.com/ditramadia/lockleaf/internal/ui"
 )
 
@@ -113,26 +112,8 @@ func (h *Handler) DeleteVault(vaultName string, force bool) {
 
 	// Prompt user for confirmation
 	if !force {
-
-		confirm := ""
 		match := "vault/" + vaultName
-
-		promptMsg := fmt.Sprintf("Type '%s' to confirm:", match)
-		prompt := &survey.Input{
-			Message: fmt.Sprint(ui.Normal.Render(promptMsg)),
-		}
-		survey.AskOne(prompt, &confirm,
-			survey.WithStdio(os.Stdin, os.Stderr, os.Stderr),
-			survey.WithIcons(func(icons *survey.IconSet) {
-				icons.Question.Format = "reset"
-				icons.Question.Text = "?"
-			}),
-		)
-
-		if confirm != match {
-			fmt.Println(ui.Error.Render("Confirmation failed."))
-			os.Exit(0)
-		}
+		h.askConfirmation(match)
 	}
 
 	activeVault, ok, err := h.cfg.GetActiveVault()

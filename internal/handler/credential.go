@@ -79,7 +79,30 @@ func (h *Handler) RenameCredential(oldName, newName string) {
 	os.Exit(0)
 }
 
+func (h *Handler) DeleteCredential(credentialName string, force bool) {
+	activeVault := h.getActiveVault()
+
+	h.validateCredentialExists(activeVault, credentialName)
+
+	// Prompt user for confirmation
+	if !force {
+		match := activeVault + "/" + credentialName
+		h.askConfirmation(match)
+	}
+
+	if err := h.s.RemoveCredential(activeVault, credentialName); err != nil {
+		fmt.Println(ui.Error.Render(err.Error()))
+		os.Exit(1)
+	}
+
+	successMsg := fmt.Sprintf("Credential '%s' deleted.", credentialName)
+	fmt.Println(ui.Success.Render(successMsg))
+
+	os.Exit(0)
+}
+
 // Internal helpers
+
 func (h *Handler) getActiveVault() string {
 	activeVault, ok, err := h.cfg.GetActiveVault()
 	if err != nil {
@@ -92,4 +115,17 @@ func (h *Handler) getActiveVault() string {
 	}
 
 	return activeVault
+}
+
+func (h *Handler) validateCredentialExists(vault string, vaultName string) {
+	exists, err := h.s.IsCredentialExist(vault, vaultName)
+	if err != nil {
+		fmt.Println(ui.Error.Render(err.Error()))
+		os.Exit(1)
+	}
+	if !exists {
+		fmt.Println(ui.Error.Render("Credential not found."))
+		fmt.Println(ui.Tips.MarginLeft(2).Render("(Use \"leaf cred\" to list credentials)"))
+		os.Exit(1)
+	}
 }
