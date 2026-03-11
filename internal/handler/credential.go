@@ -57,6 +57,28 @@ func (h *Handler) ListCredentials() {
 	os.Exit(0)
 }
 
+func (h *Handler) RenameCredential(oldName, newName string) {
+	if oldName == "" {
+		fmt.Println(ui.Error.Render("Please specify the credential to rename."))
+		fmt.Println(ui.Tips.MarginLeft(2).Render("(Use \"leaf cred -m <new-name> <old-name>\" to rename a credential)"))
+		os.Exit(1)
+	}
+
+	activeVault := h.getActiveVault()
+
+	if err := h.s.RenameCredential(activeVault, oldName, newName); err != nil {
+		fmt.Println(ui.Error.Render(err.Error()))
+		os.Exit(1)
+	}
+
+	styledNewName := ui.Info.Bold(true).Render(newName)
+	fmt.Println(ui.Success.Render(
+		fmt.Sprintf("Credential '%s' renamed to '%s'.", oldName, styledNewName),
+	))
+
+	os.Exit(0)
+}
+
 // Internal helpers
 func (h *Handler) getActiveVault() string {
 	activeVault, ok, err := h.cfg.GetActiveVault()
