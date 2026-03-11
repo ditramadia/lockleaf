@@ -1,4 +1,4 @@
-package manager
+package service
 
 import (
 	"testing"
@@ -27,7 +27,7 @@ func TestCreateVault(t *testing.T) {
 				require.NoError(t, s.Save(newTestVault(tc.vaultName, nil)))
 			}
 
-			err := newTestManager(s).CreateVault(tc.vaultName)
+			err := newTestService(s).CreateVault(tc.vaultName)
 			if tc.wantErr {
 				require.Error(t, err)
 				return
@@ -58,7 +58,7 @@ func TestListVaults(t *testing.T) {
 				require.NoError(t, s.Save(newTestVault(vName, nil)))
 			}
 
-			got, err := newTestManager(s).ListVaults()
+			got, err := newTestService(s).ListVaults()
 			require.NoError(t, err)
 
 			require.ElementsMatch(t, tc.vaults, got)
@@ -94,7 +94,7 @@ func TestRenameVaults(t *testing.T) {
 				require.NoError(t, s.Save(newTestVault(tc.newVaultName, tc.credentials)))
 			}
 
-			err := newTestManager(s).RenameVault(tc.oldVaultName, tc.newVaultName)
+			err := newTestService(s).RenameVault(tc.oldVaultName, tc.newVaultName)
 
 			if tc.wantErr {
 				require.Error(t, err)
@@ -132,7 +132,7 @@ func TestRemoveVault(t *testing.T) {
 				require.NoError(t, s.Save(newTestVault(tc.vaultName, nil)))
 			}
 
-			err := newTestManager(s).RemoveVault(tc.vaultName)
+			err := newTestService(s).RemoveVault(tc.vaultName)
 			if tc.wantErr {
 				require.Error(t, err)
 				return
@@ -165,7 +165,7 @@ func TestIsVaultExist(t *testing.T) {
 				require.NoError(t, s.Save(newTestVault(tc.vaultName, nil)))
 			}
 
-			got, err := newTestManager(s).IsVaultExist(tc.vaultName)
+			got, err := newTestService(s).IsVaultExist(tc.vaultName)
 
 			require.NoError(t, err)
 			require.Equal(t, tc.isVaultExist, got)

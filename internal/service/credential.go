@@ -1,4 +1,4 @@
-package manager
+package service
 
 import (
 	"fmt"
@@ -6,16 +6,16 @@ import (
 	"github.com/ditramadia/lockleaf/internal/vault"
 )
 
-func (m *Manager) CreateCredential(vaultName, name string) error {
+func (s *Service) CreateCredential(vaultName, name string) error {
 
 	// Load the vault
-	v, err := m.Storage.Load(vaultName)
+	v, err := s.Storage.Load(vaultName)
 	if err != nil {
 		return fmt.Errorf("Error loading vault: %w", err)
 	}
 
 	// Check if credential already exists
-	exists, err := m.Storage.IsCredentialExist(v, name)
+	exists, err := s.Storage.IsCredentialExist(v, name)
 	if err != nil {
 		return fmt.Errorf("Error checking credential existance: %w", err)
 	}
@@ -28,7 +28,7 @@ func (m *Manager) CreateCredential(vaultName, name string) error {
 	v.Credentials[name] = *credential
 
 	// Save the updated vault
-	if err := m.Storage.Save(v); err != nil {
+	if err := s.Storage.Save(v); err != nil {
 		return fmt.Errorf("Error saving vault: %w", err)
 	}
 

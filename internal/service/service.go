@@ -1,4 +1,4 @@
-package manager
+package service
 
 import (
 	"errors"
@@ -15,13 +15,12 @@ var (
 	ErrFieldNotFound      = errors.New("Field not found")
 )
 
-// Manager represents the app global manager
-type Manager struct {
+type Service struct {
 	Storage *vault.Storage
 }
 
-func New(storage *vault.Storage) *Manager {
-	return &Manager{
+func New(storage *vault.Storage) *Service {
+	return &Service{
 		Storage: storage,
 	}
 }
@@ -34,7 +33,7 @@ func newTestStorage(t *testing.T) *vault.Storage {
 	return vault.New(t.TempDir())
 }
 
-func newTestManager(s *vault.Storage) *Manager {
+func newTestService(s *vault.Storage) *Service {
 	return New(s)
 }
 

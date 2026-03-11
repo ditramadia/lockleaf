@@ -10,7 +10,7 @@ import (
 )
 
 func (h *Handler) InitVault(vaultName string) {
-	if err := h.m.CreateVault(vaultName); err != nil {
+	if err := h.s.CreateVault(vaultName); err != nil {
 		fmt.Println(ui.Error.Render(err.Error()))
 		os.Exit(1)
 	}
@@ -36,7 +36,7 @@ func (h *Handler) Connect(vaultName string) {
 }
 
 func (h *Handler) ListVaults() {
-	vaults, err := h.m.ListVaults()
+	vaults, err := h.s.ListVaults()
 	if err != nil {
 		fmt.Println(ui.Error.Render(err.Error()))
 		os.Exit(1)
@@ -99,7 +99,7 @@ func (h *Handler) RenameVault(oldName, newName string) {
 		oldName = activeVaultName
 	}
 
-	if err := h.m.RenameVault(oldName, newName); err != nil {
+	if err := h.s.RenameVault(oldName, newName); err != nil {
 		fmt.Println(ui.Error.Render(err.Error()))
 		os.Exit(1)
 	}
@@ -157,7 +157,7 @@ func (h *Handler) DeleteVault(vaultName string, force bool) {
 		}
 	}
 
-	if err := h.m.RemoveVault(vaultName); err != nil {
+	if err := h.s.RemoveVault(vaultName); err != nil {
 
 		// Rollback config active vault
 		if isActive {
@@ -180,7 +180,7 @@ func (h *Handler) DeleteVault(vaultName string, force bool) {
 // Internal helpers
 
 func (h *Handler) validateVaultExists(vaultName string) {
-	exists, err := h.m.IsVaultExist(vaultName)
+	exists, err := h.s.IsVaultExist(vaultName)
 	if err != nil {
 		fmt.Println(ui.Error.Render(err.Error()))
 		os.Exit(1)

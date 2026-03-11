@@ -2,17 +2,17 @@ package handler
 
 import (
 	"github.com/ditramadia/lockleaf/internal/config"
-	"github.com/ditramadia/lockleaf/internal/manager"
+	"github.com/ditramadia/lockleaf/internal/service"
 )
 
 type Handler struct {
 	cfg *config.Config
-	m   *manager.Manager
+	s   *service.Service
 }
 
-func New(cfg *config.Config, manager *manager.Manager) *Handler {
+func New(config *config.Config, service *service.Service) *Handler {
 	return &Handler{
-		cfg: cfg,
-		m:   manager,
+		cfg: config,
+		s:   service,
 	}
 }

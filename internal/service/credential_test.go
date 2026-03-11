@@ -1,4 +1,4 @@
-package manager
+package service
 
 import (
 	"testing"
@@ -23,7 +23,7 @@ func TestCreateCredential(t *testing.T) {
 			s := newTestStorage(t)
 			require.NoError(t, s.Save(newTestVault(tc.vaultName, nil)))
 
-			err := newTestManager(s).CreateCredential(tc.vaultName, tc.credentialName)
+			err := newTestService(s).CreateCredential(tc.vaultName, tc.credentialName)
 			require.NoError(t, err)
 
 			v, err := s.Load(tc.vaultName)

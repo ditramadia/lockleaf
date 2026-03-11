@@ -1,4 +1,4 @@
-package manager
+package service
 
 import (
 	"fmt"
@@ -6,9 +6,9 @@ import (
 	"github.com/ditramadia/lockleaf/internal/vault"
 )
 
-func (m *Manager) CreateVault(name string) error {
+func (s *Service) CreateVault(name string) error {
 	// Check if vault already exists
-	exists, err := m.Storage.IsVaultExist(name)
+	exists, err := s.Storage.IsVaultExist(name)
 	if err != nil {
 		return fmt.Errorf("Error checking vault existance: %w", err)
 	}
@@ -20,20 +20,20 @@ func (m *Manager) CreateVault(name string) error {
 	vault := vault.NewVault(name)
 
 	// Save the vault
-	if err = m.Storage.Save(vault); err != nil {
+	if err = s.Storage.Save(vault); err != nil {
 		return fmt.Errorf("Error saving the vault: %w", err)
 	}
 
 	return nil
 }
 
-func (m *Manager) ListVaults() ([]string, error) {
-	return m.Storage.List()
+func (s *Service) ListVaults() ([]string, error) {
+	return s.Storage.List()
 }
 
-func (m *Manager) RenameVault(name, newName string) error {
+func (s *Service) RenameVault(name, newName string) error {
 	// Check if vault exists
-	exists, err := m.Storage.IsVaultExist(name)
+	exists, err := s.Storage.IsVaultExist(name)
 	if err != nil {
 		return fmt.Errorf("Error checking vault existance: %w", err)
 	}
@@ -42,7 +42,7 @@ func (m *Manager) RenameVault(name, newName string) error {
 	}
 
 	// Check if vault with newName already exists
-	exists, err = m.Storage.IsVaultExist(newName)
+	exists, err = s.Storage.IsVaultExist(newName)
 	if err != nil {
 		return fmt.Errorf("Error checking vault existance: %w", err)
 	}
@@ -51,16 +51,16 @@ func (m *Manager) RenameVault(name, newName string) error {
 	}
 
 	// Rename the vault
-	if err = m.Storage.Rename(name, newName); err != nil {
+	if err = s.Storage.Rename(name, newName); err != nil {
 		return fmt.Errorf("Error renaming the vault: %w", err)
 	}
 
 	return nil
 }
 
-func (m *Manager) RemoveVault(name string) error {
+func (s *Service) RemoveVault(name string) error {
 	// Check if vault exists
-	exists, err := m.Storage.IsVaultExist(name)
+	exists, err := s.Storage.IsVaultExist(name)
 	if err != nil {
 		fmt.Println("Confirmation failed.")
 		fmt.Println("Aborted.")
@@ -71,16 +71,16 @@ func (m *Manager) RemoveVault(name string) error {
 	}
 
 	// Remove the vault
-	if err = m.Storage.Remove(name); err != nil {
+	if err = s.Storage.Remove(name); err != nil {
 		return fmt.Errorf("Error removing the vault: %w", err)
 	}
 
 	return nil
 }
 
-func (m *Manager) IsVaultExist(name string) (bool, error) {
+func (s *Service) IsVaultExist(name string) (bool, error) {
 	// Check if vault exists
-	exists, err := m.Storage.IsVaultExist(name)
+	exists, err := s.Storage.IsVaultExist(name)
 	if err != nil {
 		return false, fmt.Errorf("Error checking vault existance: %w", err)
 	}

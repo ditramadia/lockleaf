@@ -20,7 +20,7 @@ func (h *Handler) AddCredential(credentialName string) {
 	}
 
 	// Create credential in the active vault
-	if err := h.m.CreateCredential(activeVault, credentialName); err != nil {
+	if err := h.s.CreateCredential(activeVault, credentialName); err != nil {
 		fmt.Println(ui.Error.Render(err.Error()))
 		os.Exit(1)
 	}

@@ -7,7 +7,7 @@ import (
 
 	"github.com/ditramadia/lockleaf/internal/config"
 	"github.com/ditramadia/lockleaf/internal/handler"
-	"github.com/ditramadia/lockleaf/internal/manager"
+	"github.com/ditramadia/lockleaf/internal/service"
 	"github.com/ditramadia/lockleaf/internal/vault"
 	"github.com/spf13/cobra"
 )
@@ -64,7 +64,7 @@ func Setup() error {
 	storage := vault.New(dataDir)
 
 	// Setup manager
-	m := manager.New(storage)
+	m := service.New(storage)
 
 	// Setup handlers
 	h = handler.New(cfg, m)
