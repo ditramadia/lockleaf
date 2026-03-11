@@ -34,3 +34,18 @@ func (s *Service) CreateCredential(vaultName, name string) error {
 
 	return nil
 }
+
+func (s *Service) ListCredentials(vaultName string) ([]string, error) {
+
+	// Load the vault
+	v, err := s.Storage.Load(vaultName)
+	if err != nil {
+		return nil, fmt.Errorf("Error loading vault: %w", err)
+	}
+
+	var credentials []string
+	for _, cred := range v.Credentials {
+		credentials = append(credentials, cred.Name)
+	}
+	return credentials, nil
+}
